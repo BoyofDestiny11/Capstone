@@ -220,7 +220,7 @@ def schedule_page(schedule, labels):
         """
     return html
 
-def page_gen(schedule, amounts):
+def page_gen(schedule, amounts, last_dose_taken):
     global page_requested, labels
     if "/schedule" in page_requested:
         html=schedule_page(schedule, labels)
@@ -366,7 +366,10 @@ def page_gen(schedule, amounts):
         </html>
         """
     else:
-        html= """
+        dose_alarm=" not"
+        if (last_dose_taken):
+            dose_alarm=""
+        html= f"""
         <html>
         <head>Home</head>
         <body>
@@ -375,6 +378,14 @@ def page_gen(schedule, amounts):
                 <input type="submit" formmethod="get" formaction="./labels" value="Label Containers">
                 <input type="submit" formmethod="get" formaction="./amounts" value="Update Pill Amounts">
             </form>
+            <table>
+                <tr>
+                    <td>Status</td>
+                </tr>
+                <tr>
+                    <td>The last dose was{dose_alarm} taken.</td>
+                </tr>
+            </table>
         </body>
         </html>
         """

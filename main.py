@@ -6,6 +6,7 @@ import website
 # Globals shared by all modules.
 schedule=[]
 amounts=[0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+last_dose_taken=True
 time_init=[]
 
 
@@ -23,7 +24,7 @@ async def handle_client(reader, writer):
     # Update variables based on client request
     await website.parse_response(reader, schedule, amounts)
     # Generate new_page
-    new_page = website.page_gen(schedule, amounts)
+    new_page = website.page_gen(schedule, amounts, last_dose_taken)
 
     # Send the HTTP response and close the connection
     writer.write('HTTP/1.0 200 OK\r\nContent-type: text/html\r\n\r\n')
@@ -44,7 +45,11 @@ async def async_loop():
     asyncio.create_task(server)
     
     # Loop for other tasks
+    global last_dose_taken
     while True:
+        # Simulate value updates in dispenser for testing
+        # last_dose_taken=not last_dose_taken
+        # print(last_dose_taken)
         await asyncio.sleep(10)      
 
 # Test Functions for main-level
