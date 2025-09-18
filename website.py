@@ -33,8 +33,11 @@ def init_wifi():
 
 # Parsing Functions ----------------------------------------------------------------------
 def str_to_time(time_str):
-    print(time_str)
     hour, minute = time_str.split("%3A")
+    minute = number.search(minute)
+    if not minute:
+        return 0
+    minute = int(minute.group(0))
     return int(hour)*_MIN_RES+int(minute)
 
 def schedule_add(body, schedule):
@@ -116,7 +119,11 @@ def amounts_clr(page, amounts):
     index=int(match_base.group(0))                  #Reset amounts[index]
     amounts[index]=0
 
-async def parse_response(reader, schedule, amounts):
+def init_time_set(body, init_time):
+    label, val = body.split("=")
+    init_time[0]=str_to_time(val)
+
+async def parse_response(reader, schedule, amounts, init_time):
     '''
     :reader:            asynio Steam reader object
 
@@ -134,6 +141,7 @@ async def parse_response(reader, schedule, amounts):
         if len(line) < 20: # This might glitch if the request is a multiple of 20 bytes.
             break
     request=str(request)
+    # print(request)
     header, body = request.split("\\r\\n\\r\\n")
     page=header.split(" ")[1]
 
@@ -160,6 +168,8 @@ async def parse_response(reader, schedule, amounts):
         amounts_set(body, amounts)
         page_requested="/amounts"
         return
+    elif "/init_time" in page:
+        init_time_set(body, init_time)
     page_requested=page
 
 # Page Generagation Functions ---------------------------------------------------------------
@@ -220,7 +230,7 @@ def schedule_page(schedule, labels):
         """
     return html
 
-def page_gen(schedule, amounts, last_dose_taken):
+def page_gen(schedule, amounts, last_dose_taken, init_time):
     global page_requested, labels
     if "/schedule" in page_requested:
         html=schedule_page(schedule, labels)
@@ -374,18 +384,30 @@ def page_gen(schedule, amounts, last_dose_taken):
         <head>Home</head>
         <body>
             <form method="get" action="./home">
-                <input type="submit" formmethod="get" formaction="./schedule" value="View Schedule">
-                <input type="submit" formmethod="get" formaction="./labels" value="Label Containers">
-                <input type="submit" formmethod="get" formaction="./amounts" value="Update Pill Amounts">
-            </form>
             <table>
                 <tr>
-                    <td>Status</td>
+                    <td><input type="submit" formmethod="get" formaction="./labels" value="Label Containers"></td>
+                </tr>
+                <tr>
+                    <td><input type="submit" formmethod="get" formaction="./amounts" value="Update Pill Amounts"></td>
+                </tr>
+                <tr>
+                    <td><input type="submit" formmethod="get" formaction="./schedule" value="View Schedule"></td>
+                </tr>
+                <tr>
+                    <td>Initial Time</td>
+                    <td>Reset Time</td>
+                </tr>
+                <tr>
+                    <td>{time_to_str(init_time[0])}</td>
+                    <td><input type="time" name="init_time" id="time" placeholder=""></td>
+                    <td><input type="submit" formmethod="post" formaction="./init_time" value="Reset initial time."></td>
                 </tr>
                 <tr>
                     <td>The last dose was{dose_alarm} taken.</td>
                 </tr>
             </table>
+            </form>
         </body>
         </html>
         """

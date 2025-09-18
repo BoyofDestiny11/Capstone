@@ -7,7 +7,7 @@ import website
 schedule=[]
 amounts=[0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
 last_dose_taken=True
-time_init=[]
+init_time=[0]
 
 
 # Code for loop
@@ -19,12 +19,12 @@ async def handle_client(reader, writer):
     Responds to the client.
     '''
     # Global variables that are shared with non-website modules
-    global schedule, amounts, time_init
+    global schedule, amounts, init_time
     
     # Update variables based on client request
-    await website.parse_response(reader, schedule, amounts)
+    await website.parse_response(reader, schedule, amounts, init_time)
     # Generate new_page
-    new_page = website.page_gen(schedule, amounts, last_dose_taken)
+    new_page = website.page_gen(schedule, amounts, last_dose_taken, init_time)
 
     # Send the HTTP response and close the connection
     writer.write('HTTP/1.0 200 OK\r\nContent-type: text/html\r\n\r\n')
