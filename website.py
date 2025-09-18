@@ -6,6 +6,7 @@ from micropython import const
 # IP Address: 192.168.4.1
 # Global Constants
 _NUM_CONTAINERS = const(10)
+_MIN_RES = const(60)
 number=re.compile("\d+") # type: ignore
 
 # Global variables for the website module.
@@ -31,33 +32,45 @@ def init_wifi():
         pass
 
 # Parsing Functions ----------------------------------------------------------------------
+def str_to_time(time_str):
+    print(time_str)
+    hour, minute = time_str.split("%3A")
+    return int(hour)*_MIN_RES+int(minute)
 
 def schedule_add(body, schedule):
     global _NUM_CONTAINERS
     pairs = body.split("&")
     label, val = pairs[0].split("=")
     if label != "new_time":
-        error_message="All new entries must include a time."
-        return              #Don't add an entry without a time.
-    schedule.append(val)    #Append the time.
-    i=0
+        raise ValueError("Schedule entry did not include a time.")
+    val=str_to_time(val)
+    insert_pos=len(schedule)
+    for x in range(0, len(schedule), 11):
+        if (schedule[x] > val):
+            insert_pos=x
+            break
+        if (schedule[x] == val):
+            raise ValueError("Schedule entry already exists for the specified time.")
+    
+    schedule.insert(insert_pos, val)    #Append the time.
+    i=insert_pos+1
     index=0
     for pair in pairs[1:]:  #Append the doses.
         label, val = pair.split("=")
-        index=int(label)
-        
+        index=int(label)+insert_pos
+
         match_val = number.search(val)              #Ensure value isn't empty
         if not match_val:
             continue
 
         while i<index:
-            schedule.append(0)                      #Add zero for missing values.
+            schedule.insert(i, 0)                      #Add zero for missing values.
             i+=1
         
-        schedule.append(int(match_val.group(0)))         #Add value
+        schedule.insert(i, int(match_val.group(0)))         #Add value
         i+=1
-    for x in range(_NUM_CONTAINERS-i):
-        schedule.append(0)
+    for x in range(_NUM_CONTAINERS-(i-insert_pos-1)):
+        schedule.insert(i, 0)
    
 def schedule_del(page, schedule):
     global _NUM_CONTAINERS
@@ -150,6 +163,9 @@ async def parse_response(reader, schedule, amounts):
     page_requested=page
 
 # Page Generagation Functions ---------------------------------------------------------------
+def time_to_str(time_int):
+    return f'{int(time_int/_MIN_RES)}:{time_int%_MIN_RES}'
+
 def schedule_page(schedule, labels):
     global _NUM_CONTAINERS       
     # Add table entries for each entry in list
@@ -189,9 +205,12 @@ def schedule_page(schedule, labels):
                             <tr><form method="get" action="/home">
                 """
         for i in range(max):
-            if (i%(_NUM_CONTAINERS+1)== 0 and i!=0):
+            if (i%(_NUM_CONTAINERS+1)== 0 and i!=0): # New line
                 html+=f"""<td><input type="submit" formmethod="get" formaction="./delete_{i-(_NUM_CONTAINERS+1)}" value="Delete."></td></form></tr><tr><form>"""
-            html+=f"""<td>{schedule[i]}</td>"""
+            if (i%(_NUM_CONTAINERS+1)==0): # Time Entry
+                html+=f"""<td>{time_to_str(schedule[i])}</td>"""
+            else: # Dose Entry
+                html+=f"""<td>{schedule[i]}</td>""" 
             
         html+= f"""
             <td><input type="submit" formmethod="get" formaction="./delete_{max-(_NUM_CONTAINERS+1)}" value="Delete."></td></form></tr>
