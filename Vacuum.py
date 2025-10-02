@@ -1,7 +1,8 @@
 from machine import Pin, PWM
 from time import sleep
 
-vac = machine.Pin(15) #this is the pin for the pwm vacuum
+
+vac = Pin(15) #this is the pin for the pwm vacuum
 vac_pwm = PWM(vac)
 
 #Set PWM frequency
