@@ -1,15 +1,16 @@
 import asyncio
+import time
+
+# For tests only
+from machine import Pin
 
 # Our Modules
 import website
+import memory
 
 # Globals shared by all modules.
-schedule=[]
-amounts=[0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
-last_dose_taken=True
-init_time=[0]
-
-
+data = memory.load()
+        
 # Code for loop
 async def handle_client(reader, writer):
     '''
@@ -19,18 +20,20 @@ async def handle_client(reader, writer):
     Responds to the client.
     '''
     # Global variables that are shared with non-website modules
-    global schedule, amounts, init_time
+    global data
     
     # Update variables based on client request
-    await website.parse_response(reader, schedule, amounts, init_time)
+    await website.parse_response(reader, data)
     # Generate new_page
-    new_page = website.page_gen(schedule, amounts, last_dose_taken, init_time)
+    new_page = website.page_gen(data['schedule'], data['amounts'], data['last_dose_taken'], data['init_time'])
 
     # Send the HTTP response and close the connection
     writer.write('HTTP/1.0 200 OK\r\nContent-type: text/html\r\n\r\n')
     writer.write(new_page)
     await writer.drain()
     await writer.wait_closed()
+
+    memory.save(data)
 
 async def async_loop():    
     '''
@@ -45,12 +48,13 @@ async def async_loop():
     asyncio.create_task(server)
     
     # Loop for other tasks
-    global last_dose_taken
+    global data
     while True:
         # Simulate value updates in dispenser for testing
-        # last_dose_taken=not last_dose_taken
-        # print(last_dose_taken)
-        await asyncio.sleep(10)      
+        data["last_dose_taken"]=not data['last_dose_taken']
+        memory.save(data)
+        print(data)
+        await asyncio.sleep(10)
 
 # Test Functions for main-level
 def loop_test():
@@ -66,6 +70,27 @@ def loop_test():
     except KeyboardInterrupt:
         print('Program Interrupted by the user')
 
+def memory_test():
+    def blink(x):
+        led = Pin('LED', Pin.OUT)
+        for _ in range(x):
+            led.value(True)
+            time.sleep(0.33)
+            led.value(False)
+            time.sleep(0.33)
+
+    data = memory.load()
+
+    while (True):
+        print(data)
+
+        data["init_time"] = data['init_time']+1
+        memory.save(data)
+        blink(data["init_time"])
+
+        print("Blinking done.")
+        time.sleep(5)
+
 # Main Code
-#memory.load(schedule, amounts, time_init)
 loop_test()
+# memory_test()

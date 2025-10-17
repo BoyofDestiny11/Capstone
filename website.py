@@ -119,11 +119,11 @@ def amounts_clr(page, amounts):
     index=int(match_base.group(0))                  #Reset amounts[index]
     amounts[index]=0
 
-def init_time_set(body, init_time):
+def init_time_set(body):
     label, val = body.split("=")
-    init_time[0]=str_to_time(val)
+    return str_to_time(val)
 
-async def parse_response(reader, schedule, amounts, init_time):
+async def parse_response(reader, data):
     '''
     :reader:            asynio Steam reader object
 
@@ -149,15 +149,15 @@ async def parse_response(reader, schedule, amounts, init_time):
     if "/favicon.ico" in page:
         return
     elif "/delete" in page:
-        schedule_del(page, schedule)
+        schedule_del(page, data['schedule'])
         page_requested="/schedule"
         return
     elif "/clear_amount" in page:
-        amounts_clr(page, amounts)
+        amounts_clr(page, data['amounts'])
         page_requested="/amounts"
         return
     elif "/submit_schedule" in page:
-        schedule_add(body, schedule)
+        schedule_add(body, data['schedule'])
         page_requested="/add"
         return
     elif "/submit_labels" in page:
@@ -165,11 +165,12 @@ async def parse_response(reader, schedule, amounts, init_time):
         page_requested="/labels"
         return
     elif "/submit_amounts" in page:
-        amounts_set(body, amounts)
+        amounts_set(body, data['amounts'])
         page_requested="/amounts"
         return
     elif "/init_time" in page:
-        init_time_set(body, init_time)
+        data['init_time']=init_time_set(body)
+        print(f'init_time is {data['init_time']}.')
     page_requested=page
 
 # Page Generagation Functions ---------------------------------------------------------------
@@ -399,7 +400,7 @@ def page_gen(schedule, amounts, last_dose_taken, init_time):
                     <td>Reset Time</td>
                 </tr>
                 <tr>
-                    <td>{time_to_str(init_time[0])}</td>
+                    <td>{time_to_str(init_time)}</td>
                     <td><input type="time" name="init_time" id="time" placeholder=""></td>
                     <td><input type="submit" formmethod="post" formaction="./init_time" value="Reset initial time."></td>
                 </tr>
