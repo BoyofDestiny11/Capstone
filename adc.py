@@ -72,6 +72,7 @@ def adcpinsetup(sclvalue, sdavalue):
 
 
 def getbaseline():
+   
     adc.configure(channel=1, resolution=18, gain=1, continuous=False)
     time.sleep(0.3)
     baseline = adc.read()
@@ -84,7 +85,8 @@ def readadcvalue():
     return value
 #For right now, this code returns a 0 for a pill has not been picked up OR a pill pickup error
 # and a 1 for if a pill has been picked up. I also have the print commands but these can be commented out. 
-def checkpillpickup(baseline, value):
+def checkpillpickup(baseline):
+    value = readadcvalue()
     print("ADC Raw Value:", value)
     if value is None or baseline is None:
         print ("ADC Read Error Delay")
@@ -94,22 +96,28 @@ def checkpillpickup(baseline, value):
         return 1
 
 
+try:        
+    #baseline and value need the adc var to be called adc in order to read in any value. 
+    #This main code is just a placeholder for Luke to see how the OSError and the adc setup is supposed to flow.
+    # DO NOT INCLUDE THIS IN THE FINAL DESIGN
+    adc = adcpinsetup(1,0)
+    Vacuum.vacuum_on()
+    time.sleep(0.4)
+
+    baseline = getbaseline()
+    print("Baseline Value:", baseline)
+except Exception as e: print("Initialization error:", e)
+
 while(True):
-    try:        
-        #baseline and value need the adc var to be called adc in order to read in any value. 
-        #This main code is just a placeholder for Luke to see how the OSError and the adc setup is supposed to flow.
-        # DO NOT INCLUDE THIS IN THE FINAL DESIGN
-        adc = adcpinsetup(0,1)
-        baseline = getbaseline()
-        value = readadcvalue()
-        checkpillpickup(baseline, value)
+    try:
+         checkpillpickup(baseline)
 
-
-        print("Placeholder")
-               # print("Pill picked up!")
-           # voltage = to_voltage(value)
+        #print("Placeholder")
+                # print("Pill picked up!")
+            # voltage = to_voltage(value)
             #print("Voltage:", voltage)
 
     except OSError as e:
-        print("I2C Error:", e)
-        time.sleep(0.5)  # give bus time to recover
+            print("Buffering...")
+           # print("I2C Error:", e)
+            time.sleep(0.5)  # give bus time to recover
