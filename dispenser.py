@@ -1,47 +1,21 @@
-import time_unit
 from micropython import const
-
-_NUM_CONTAINERS = const(10)
-
-# Code to update amounts if pills are dispensed.
-def update_values(amounts, doses):
-    for x in range(len(amounts)):
-        amounts[x]=amounts[x]-doses[x]
-
-# Top-level dispenser function
-def dispenser(data):
-    '''
-    returns False: not time, True: was time
-        If it was time,
-            - updates data['last_dose_taken'] with whether the dose was dispensed.
-            - updates amounts
-    '''
-    # Get the schedule that corresponds to the current time or return if there is no match.
-    current_time=time_unit.now()
-    doses=[0]
-    for x in range(0, len(data['schedule']), _NUM_CONTAINERS+1):
-        if (data['schedule'][x]==current_time):
-            doses=data['schedule'][x+1:x+_NUM_CONTAINERS+1]
-            break
-    if (doses==[0]):
-        return False    # It was not time to dispense.
-    
-    # It is time to dispense. All other dispense code. vvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvv
-    from machine import Pin
+from machine import Pin
 from time import sleep
 
 # --------------------
 # Parameters
 # --------------------
-STEP_DEGREE = 1.8 / 4       # degrees per step /x where x = microstep value.
-DELAY       = 0.0025        # half-period delay between step toggles
-STEPS_TO_OPENING = 40       #10 * microstep value
+_STEP_DEGREE = const(1.8 / 4)       # degrees per step /x where x = microstep value.
+_DELAY       = const(0.0025)        # half-period _DELAY between step toggles
+_STEPS_TO_OPENING = const(40)       #10 * microstep value
+_NUM_CONTAINERS = const(10)
 
-# Disc container locations (degrees)
-containers = [0, 36, 72, 108, 144, 180, 216, 252, 288, 324]
+_CRANE_DIR_LOWER = const(1)         # Define which dir lowers/raises *your* arm; flip 0/1 here if needed.
+_CRANE_DIR_RAISE = const(0)
 
-# Static calibration input (unchanged for both motors)
-_cal = Pin(18, Pin.IN)
+CONTAINERS = [0, 36, 72, 108, 144, 180, 216, 252, 288, 324] # Disc container locations (degrees)
+
+_cal = Pin(18, Pin.IN)              # Static calibration input (unchanged for both motors)
 
 # --------------------
 # Minimal Stepper class
@@ -52,21 +26,21 @@ class Stepper:
     Each instance carries its own pins and position.
     dir: 0 = forward (increasing degrees), 1 = backward (decreasing)
     """
-    def __init__(self, name, dir_pin, step_pin, slp_pin, step_degree=STEP_DEGREE, delay=DELAY):
+    def __init__(self, name, dir_pin, step_pin, slp_pin, _STEP_DEGREE=_STEP_DEGREE, _DELAY=_DELAY):
         self.name         = name
         self._dir         = Pin(dir_pin,  Pin.OUT)
         self._step        = Pin(step_pin, Pin.OUT)
         self._slp         = Pin(slp_pin,  Pin.OUT)
-        self.step_degree  = float(step_degree)
-        self.delay        = float(delay)
+        self._STEP_DEGREE  = float(_STEP_DEGREE)
+        self._DELAY        = float(_DELAY)
         # self.pos_deg      = 0.0  # tracked 0..360
 
     # def _bump_pos(self, dir_):
     #     # Update logical position each full step (on every "rising" toggle)
     #     if dir_ == 0:
-    #         self.pos_deg += self.step_degree
+    #         self.pos_deg += self._STEP_DEGREE
     #     else:
-    #         self.pos_deg -= self.step_degree
+    #         self.pos_deg -= self._STEP_DEGREE
     #     # normalize to [0, 360)
     #     while self.pos_deg >= 360.0: self.pos_deg -= 360.0
     #     while self.pos_deg <   0.0: self.pos_deg += 360.0
@@ -86,7 +60,7 @@ class Stepper:
             self._step.value(1 - self._step.value())
             # if (i % 2) == 0:           # count once per full step
             #     self._bump_pos(dir)
-            sleep(self.delay)
+            sleep(self._DELAY)
 
         sleep(0.25)
         self._slp.value(0)             # sleep
@@ -120,13 +94,13 @@ def calcstep(current_idx, destination_idx):
     Strategy: never wrap across 0/360 to avoid limit switch; choose straight shot.
     Returns: (steps, direction)
     """
-    cur_deg = containers[current_idx]
-    dst_deg = containers[destination_idx]
+    cur_deg = CONTAINERS[current_idx]
+    dst_deg = CONTAINERS[destination_idx]
     delta   = dst_deg - cur_deg
 
     direction = 0 if destination_idx >= current_idx else 1
     degrees   = abs(delta)
-    steps     = int(round(degrees / STEP_DEGREE))
+    steps     = int(round(degrees / _STEP_DEGREE))
     return steps, direction
 
 def rotate_to_container(current_idx, destination_idx):
@@ -134,10 +108,10 @@ def rotate_to_container(current_idx, destination_idx):
     Susan.step(steps, direction)
 
 def rotate_to_opening():
-    Susan.step(STEPS_TO_OPENING, 1)
+    Susan.step(_STEPS_TO_OPENING, 1)
 
 def rotate_back_to_container():
-    Susan.step(STEPS_TO_OPENING, 0)
+    Susan.step(_STEPS_TO_OPENING, 0)
 
 def calibrate_disc():
     # Step Susan until the calibration switch trips, then zero Susan's logical position
@@ -146,16 +120,11 @@ def calibrate_disc():
     Susan.pos_deg = 0.0
 
 def fullRot_susan():
-    Susan.step(int(round(360.0 / STEP_DEGREE)), 0)
+    Susan.step(int(round(360.0 / _STEP_DEGREE)), 0)
 
 # --------------------
 # Helpers that use CRANE (arm only)
 # --------------------
-# Choose directions for your mechanics:
-# Define which dir lowers/raises *your* arm; flip 0/1 here if needed.
-CRANE_DIR_LOWER = 1
-CRANE_DIR_RAISE = 0
-
 def Lower_arm():
     #Code for lowering arm
     return True
@@ -187,12 +156,46 @@ def dispensePill(currentpos, destinationpos, amount):
 
     return True
 
+# Code to update amounts if pills are dispensed.
+def update_values(amounts, doses):
+    for x in range(len(amounts)):
+        amounts[x]=amounts[x]-doses[x]
+
+# Top-level dispenser function
+def dispenser(data):
+    '''
+    returns False: not time, True: was time
+        If it was time,
+            - updates data['last_dose_taken'] with whether the dose was dispensed.
+            - updates amounts
+    '''
+    # Get the schedule that corresponds to the current time or return if there is no match.
+    current_time=time_unit.now()    # Wrong now because time_unit was done differently.
+
+    doses=[0]
+    for x in range(0, len(data['schedule']), _NUM_CONTAINERS+1):
+        if (data['schedule'][x]==current_time):
+            doses=data['schedule'][x+1:x+_NUM_CONTAINERS+1]
+            break
+    if (doses==[0]):
+        return False    # It was not time to dispense.
+    
+    # It is time to dispense. All other dispense code. vvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvv
+    
+    # Trigger Alert
+
+    # Wait for button
+
+    # Dispense Pills
+    dispensePill()
     # End other dispense code. ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
     # Update the values based on the schedule for the current time.
     update_values(data['amounts'], doses)
     return True         # It was time to dispense.
-    
+
+
+# Test Code
 def test_dispenser():
     data={"schedule": [2, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0,
                        5, 0, 0, 2, 0, 0, 0, 0, 2, 0, 0,
