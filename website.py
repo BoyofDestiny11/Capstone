@@ -82,9 +82,6 @@ def schedule_add(body, schedule):
 def schedule_del(page, schedule):
     global _NUM_CONTAINERS
     match_base=number.search(page)
-    if not match_base:                              #Check for page errors
-        error_message="Error deleting schedule entry."
-        return
 
     base=int(match_base.group(0))                        #Delete base:base+_NUM_CONTAINERS
     for _ in range(_NUM_CONTAINERS+1):
@@ -117,8 +114,6 @@ def amounts_set(body, amounts):
 
 def amounts_clr(page, amounts):
     match_base=number.search(page)
-    if not match_base:                              #Check for page errors
-        error_message = "Error clearing amount entry."
 
     index=int(match_base.group(0))                  #Reset amounts[index]
     amounts[index]=0
