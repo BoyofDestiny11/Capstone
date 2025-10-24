@@ -7,11 +7,13 @@ from micropython import const
 # Global Constants
 _NUM_CONTAINERS = const(10)
 _MIN_RES = const(60)
+_TIME_INTERVAL = const(10)
 number=re.compile("\d+") # type: ignore
 
 # Global variables for the website module.
 labels=["", "", "", "", "", "", "", "", "", ""]
 page_requested="/home"
+error_msg=""
 
 # Debug Variables
 connection_num=0
@@ -41,7 +43,7 @@ def str_to_time(time_str):
     return int(hour)*_MIN_RES+int(minute)
 
 def schedule_add(body, schedule):
-    global _NUM_CONTAINERS
+    global _NUM_CONTAINERS, _TIME_INTERVAL
     pairs = body.split("&")
     label, val = pairs[0].split("=")
     if label != "new_time":
@@ -50,10 +52,12 @@ def schedule_add(body, schedule):
     insert_pos=len(schedule)
     for x in range(0, len(schedule), 11):
         if (schedule[x] > val):
+            if (val>schedule[x]-_TIME_INTERVAL):
+                raise ValueError(f"Schedule entry already exists for the {time_to_str(val)}-{time_to_str(val+_TIME_INTERVAL)} range.")
             insert_pos=x
             break
-        if (schedule[x] == val):
-            raise ValueError("Schedule entry already exists for the specified time.")
+        if (schedule[x] > val-_TIME_INTERVAL):
+            raise ValueError(f"Schedule entry already exists for the {time_to_str(schedule[x])}-{time_to_str(schedule[x]+_TIME_INTERVAL)} range.")
     
     schedule.insert(insert_pos, val)    #Append the time.
     i=insert_pos+1
@@ -129,7 +133,7 @@ async def parse_response(reader, data):
 
     Modifies schedule, labels, amounts, time_init, page_requested
     '''
-    global labels, page_requested
+    global labels, page_requested, error_msg
     global connection_num
     connection_num+=1
     # Read Request
@@ -157,9 +161,13 @@ async def parse_response(reader, data):
         page_requested="/amounts"
         return
     elif "/submit_schedule" in page:
-        schedule_add(body, data['schedule'])
+        try:
+            schedule_add(body, data['schedule'])
+        except Exception as e:
+            error_msg=str(e)
         page_requested="/add"
         return
+            
     elif "/submit_labels" in page:
         labels_set(body, labels)
         page_requested="/labels"
@@ -232,7 +240,7 @@ def schedule_page(schedule, labels):
     return html
 
 def page_gen(schedule, amounts, last_dose_taken, init_time):
-    global page_requested, labels
+    global page_requested, labels, error_msg
     if "/schedule" in page_requested:
         html=schedule_page(schedule, labels)
     elif "/add" in page_requested:
@@ -258,20 +266,21 @@ def page_gen(schedule, amounts, last_dose_taken, init_time):
                 </tr>
                 <tr>
                     <td><input type="time" name="new_time" id="time" placeholder="Enter dispense time."></td>
-                    <td><input type="number" name="0" id="0" placeholder="Enter dose amount."></td>
-                    <td><input type="number" name="1" id="1" placeholder="Enter dose amount."></td>
-                    <td><input type="number" name="2" id="2" placeholder="Enter dose amount."></td>
-                    <td><input type="number" name="3" id="3" placeholder="Enter dose amount."></td>
-                    <td><input type="number" name="4" id="4" placeholder="Enter dose amount."></td>
-                    <td><input type="number" name="5" id="5" placeholder="Enter dose amount."></td>
-                    <td><input type="number" name="6" id="6" placeholder="Enter dose amount."></td>
-                    <td><input type="number" name="7" id="7" placeholder="Enter dose amount."></td>
-                    <td><input type="number" name="8" id="8" placeholder="Enter dose amount."></td>
-                    <td><input type="number" name="9" id="9" placeholder="Enter dose amount."></td>
+                    <td><input type="number" min=0 name="0" id="0" placeholder="Enter dose amount."></td>
+                    <td><input type="number" min=0 name="1" id="1" placeholder="Enter dose amount."></td>
+                    <td><input type="number" min=0 name="2" id="2" placeholder="Enter dose amount."></td>
+                    <td><input type="number" min=0 name="3" id="3" placeholder="Enter dose amount."></td>
+                    <td><input type="number" min=0 name="4" id="4" placeholder="Enter dose amount."></td>
+                    <td><input type="number" min=0 name="5" id="5" placeholder="Enter dose amount."></td>
+                    <td><input type="number" min=0 name="6" id="6" placeholder="Enter dose amount."></td>
+                    <td><input type="number" min=0 name="7" id="7" placeholder="Enter dose amount."></td>
+                    <td><input type="number" min=0 name="8" id="8" placeholder="Enter dose amount."></td>
+                    <td><input type="number" min=0 name="9" id="9" placeholder="Enter dose amount."></td>
                 </tr>
                 <tr>
                     <td><input type="submit" formaction="./submit_schedule" value="Add new dispense time."></td>
                 </tr>
+                <tr><td>{error_msg}</td></tr>
             </table>
             </form>
         </body>
@@ -347,16 +356,16 @@ def page_gen(schedule, amounts, last_dose_taken, init_time):
                         <td>{amounts[9]}</td>
                     </tr>
                     <tr>
-                        <td><input type="text" id="0" name="0"></td>
-                        <td><input type="text" id="1" name="1"></td>
-                        <td><input type="text" id="2" name="2"></td>
-                        <td><input type="text" id="3" name="3"></td>
-                        <td><input type="text" id="4" name="4"></td>
-                        <td><input type="text" id="5" name="5"></td>
-                        <td><input type="text" id="6" name="6"></td>
-                        <td><input type="text" id="7" name="7"></td>
-                        <td><input type="text" id="8" name="8"></td>
-                        <td><input type="text" id="9" name="9"></td>
+                        <td><input type="" id="0" name="0"></td>
+                        <td><input type="number" min=0 id="1" name="1"></td>
+                        <td><input type="number" min=0 id="2" name="2"></td>
+                        <td><input type="number" min=0 id="3" name="3"></td>
+                        <td><input type="number" min=0 id="4" name="4"></td>
+                        <td><input type="number" min=0 id="5" name="5"></td>
+                        <td><input type="number" min=0 id="6" name="6"></td>
+                        <td><input type="number" min=0 id="7" name="7"></td>
+                        <td><input type="number" min=0 id="8" name="8"></td>
+                        <td><input type="number" min=0 id="9" name="9"></td>
                         <td><input type="submit" formaction="./submit_amounts" value="Add to pill total."></td>
                     </tr>
                     <tr>
@@ -413,6 +422,5 @@ def page_gen(schedule, amounts, last_dose_taken, init_time):
         </html>
         """
 
+    error_msg=""
     return str(html)
-
-
