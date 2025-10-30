@@ -60,9 +60,9 @@ class MCP3424:
 
         return raw
 
-def adcpinsetup(sclvalue, sdavalue):
+def adcpinsetup(I2c, sclvalue, sdavalue):
     # --- Setup I2C and ADC ---
-    i2c = I2C(0, scl=Pin(sclvalue), sda=Pin(sdavalue), freq=100000)
+    i2c = I2C(I2c, scl=Pin(sclvalue), sda=Pin(sdavalue), freq=100000)
     adc = MCP3424(i2c)
     return adc
 
@@ -78,6 +78,7 @@ def getbaseline():
     adc.configure(channel=1, resolution=12, gain=1, continuous=False)
     time.sleep(0.003)
     baseline = adc.read()
+    print("baseline is ", baseline)
     return baseline
 
 def readadcvalue():
@@ -94,7 +95,7 @@ def checkpillpickup(baseline):
         print ("ADC Read Error Delay")
         return 0
     if (((value < baseline * 0.8) or (value > baseline * 1.2)) & (value > 40)):    
-        print (" Pill picked up")
+        print (" Pill picked up, raw value", value, "baseline ", baseline)
         return 1
 
 
@@ -102,7 +103,7 @@ try:
     #baseline and value need the adc var to be called adc in order to read in any value. 
     #This main code is just a placeholder for Luke to see how the OSError and the adc setup is supposed to flow.
     # DO NOT INCLUDE THIS IN THE FINAL DESIGN
-    adc = adcpinsetup(1,0)
+    adc = adcpinsetup(0, 1, 0)
     Vacuum.vacuum_on()
     time.sleep(0.5)
     baseline = getbaseline()
