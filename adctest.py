@@ -1,7 +1,6 @@
 from machine import Pin, I2C, PWM
 import time
-import Vacuum
-import Dispenser
+import vacuumtest
 
 # --- MCP3424 Driver ---
 class MCP3424:
@@ -60,12 +59,12 @@ class MCP3424:
 
         return raw
 
-def adcpinsetup(I2c, sclvalue, sdavalue):
+def adcpinsetup(I2c = 0, sclvalue = 1, sdavalue = 0):
     # --- Setup I2C and ADC ---
     i2c = I2C(I2c, scl=Pin(sclvalue), sda=Pin(sdavalue), freq=100000)
     adc = MCP3424(i2c)
     return adc
-
+adc = adcpinsetup(0,1,0)
 
 #This just tells you what device it is. 
 
@@ -98,35 +97,31 @@ def checkpillpickup(baseline):
         print (" Pill picked up, raw value", value, "baseline ", baseline)
         return 1
 
+# if __name__ == "__main__":
+# try:        
+#     #baseline and value need the adc var to be called adc in order to read in any value. 
+#     #This main code is just a placeholder for Luke to see how the OSError and the adc setup is supposed to flow.
+#     # DO NOT INCLUDE THIS IN THE FINAL DESIGN
+#     adc = adcpinsetup(0, 1, 0)
+#     vacuumtest.vacuum_on()
+#     time.sleep(0.5)
+#     baseline = getbaseline()
+#     #Dispenser.rotate_to_container(0,6)
 
-try:        
-    #baseline and value need the adc var to be called adc in order to read in any value. 
-    #This main code is just a placeholder for Luke to see how the OSError and the adc setup is supposed to flow.
-    # DO NOT INCLUDE THIS IN THE FINAL DESIGN
-    adc = adcpinsetup(0, 1, 0)
-    Vacuum.vacuum_on()
-    time.sleep(0.5)
-    baseline = getbaseline()
-    #Dispenser.rotate_to_container(0,6)
+#     #print("Baseline Value:", baseline)
+# except Exception as e: print("Initialization error:", e)
 
-    #print("Baseline Value:", baseline)
-except Exception as e: print("Initialization error:", e)
+# while(True):
+#     try:
 
-while(True):
-    try:
-
-        checkpillpickup(baseline)
+#         checkpillpickup(baseline)
          
 
-        '''print("Placeholder")
-        time.sleep(5)
-        Dispenser.rotate_to_container(0,6)
-        '''
-                # print("Pill picked up!")
-            # voltage = to_voltage(value)
-            #print("Voltage:", voltage)
+#         '''print("Placeholder")
+#         time.sleep(5)
+#         Dispenser.rotate_to_container(0,6)
+#         '''
+#                 # print("Pill picked up!")
+#             # voltage = to_voltage(value)
+#             #print("Voltage:", voltage)
 
-    except OSError as e:
-            print("Buffering...")
-           # print("I2C Error:", e)
-            time.sleep(0.01)  # give bus time to recover
