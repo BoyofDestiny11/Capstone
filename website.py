@@ -3,6 +3,8 @@ import asyncio
 import ure as re
 from micropython import const
 
+import RTC
+
 # IP Address: 192.168.4.1
 # Global Constants
 _NUM_CONTAINERS = const(10)
@@ -120,7 +122,11 @@ def amounts_clr(page, amounts):
 
 def init_time_set(body):
     label, val = body.split("=")
-    return str_to_time(val)
+    time=str_to_time(val)
+    rtc = RTC.clocksetup(1, 3, 2)
+    rtc.set_time(hour=int(time/_MIN_RES), minute=time%_MIN_RES)
+    return time
+
 
 async def parse_response(reader, data):
     '''
