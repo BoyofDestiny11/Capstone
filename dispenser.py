@@ -1,211 +1,195 @@
-from micropython import const
-from machine import Pin
+from machine import Pin, PWM, I2C
 from time import sleep
-
-# --------------------
-# Parameters
-# --------------------
-_STEP_DEGREE = const(1.8 / 4)       # degrees per step /x where x = microstep value.
-_DELAY       = const(0.0025)        # half-period _DELAY between step toggles
-_STEPS_TO_OPENING = const(40)       #10 * microstep value
-_NUM_CONTAINERS = const(10)
-
-_CRANE_DIR_LOWER = const(1)         # Define which dir lowers/raises *your* arm; flip 0/1 here if needed.
-_CRANE_DIR_RAISE = const(0)
-
-CONTAINERS = [0, 36, 72, 108, 144, 180, 216, 252, 288, 324] # Disc container locations (degrees)
-
-_cal = Pin(18, Pin.IN)              # Static calibration input (unchanged for both motors)
-
-# --------------------
-# Minimal Stepper class
-# --------------------
-class Stepper:
-    """
-    Only shared method is `step(n, dir=0)`.
-    Each instance carries its own pins and position.
-    dir: 0 = forward (increasing degrees), 1 = backward (decreasing)
-    """
-    def __init__(self, name, dir_pin, step_pin, slp_pin, _STEP_DEGREE=_STEP_DEGREE, _DELAY=_DELAY):
-        self.name         = name
-        self._dir         = Pin(dir_pin,  Pin.OUT)
-        self._step        = Pin(step_pin, Pin.OUT)
-        self._slp         = Pin(slp_pin,  Pin.OUT)
-        self._STEP_DEGREE  = float(_STEP_DEGREE)
-        self._DELAY        = float(_DELAY)
-        # self.pos_deg      = 0.0  # tracked 0..360
-
-    # def _bump_pos(self, dir_):
-    #     # Update logical position each full step (on every "rising" toggle)
-    #     if dir_ == 0:
-    #         self.pos_deg += self._STEP_DEGREE
-    #     else:
-    #         self.pos_deg -= self._STEP_DEGREE
-    #     # normalize to [0, 360)
-    #     while self.pos_deg >= 360.0: self.pos_deg -= 360.0
-    #     while self.pos_deg <   0.0: self.pos_deg += 360.0
-
-    def step(self, n, dir=0):
-        # n counts full steps; we toggle pin twice per step
-        n = int(round(n))
-        if n <= 0:
-            return
-
-        self._slp.value(1)            # wake
-        self._dir.value(dir)
-        sleep(0.25)                    # driver settle
-        self._step.value(0)
-
-        for i in range(2 * n):         # on/off toggles
-            self._step.value(1 - self._step.value())
-            # if (i % 2) == 0:           # count once per full step
-            #     self._bump_pos(dir)
-            sleep(self._DELAY)
-
-        sleep(0.25)
-        self._slp.value(0)             # sleep
+import time_unit
+import Vacuum
+import stepper
+import adc
 
 
-# --------------------
-# Motor instances
-# --------------------
-# Motor 1: Susan
-Susan = Stepper(
-    name="Susan",
-    dir_pin=12,   # required
-    step_pin=10,  # required
-    slp_pin=14,   # required
-)
+"-----------------Initialization-----------------"
 
-# Motor 2: Crane (arm)
-Crane = Stepper(
-    name="Crane",
-    dir_pin=12,
-    step_pin=10,
-    slp_pin=14,
-)
+_NUM_CONTAINERS = const(10)             #num containers
+# adc = adctest.adcpinsetup(0,1,0)          #DO WE NEED THIS?
 
-# --------------------
-# Helpers for Susan
-# --------------------
-def calcstep(current_idx, destination_idx):
-    """
-    current_idx, destination_idx are container indices (0..9).
-    Strategy: never wrap across 0/360 to avoid limit switch; choose straight shot.
-    Returns: (steps, direction)
-    """
-    cur_deg = CONTAINERS[current_idx]
-    dst_deg = CONTAINERS[destination_idx]
-    delta   = dst_deg - cur_deg
+#endregion
+"-----------------End Initialization-----------------"
 
-    direction = 0 if destination_idx >= current_idx else 1
-    degrees   = abs(delta)
-    steps     = int(round(degrees / _STEP_DEGREE))
-    return steps, direction
+"-----------------Pickup and Drop pill Functions-----------------"
+#region Pickup/Drop
+def pickup_pill(): #COMPLETE THIS
+    print("Pickup_Pill Called")
+    Vacuum.vacuum_on() 
+    print("Vacuum on")
+    sleep(0.4)
 
-def rotate_to_container(current_idx, destination_idx):
-    steps, direction = calcstep(current_idx, destination_idx)
-    Susan.step(steps, direction)
+    baseline = adc.getbaseline()
+    print("Baseline Value:", baseline)
+    # except Exception as e: print("Initialization error:", e) CHECCK WITH ANDRE
 
-def rotate_to_opening():
-    Susan.step(_STEPS_TO_OPENING, 1)
+    stepper.arm_slp.value(1) 
+    stepper.arm_dir.value(0)
+    sleep(0.25)
+    stepper.arm_step.value(0)
+    print("stepper motor initialized")
+    arm_pos = 0
+    while(not (adc.checkpillpickup(baseline) and arm_pos <= 100)): #change 100 to whatever step is max depth.
+          stepper.step_arm()
+          arm_pos += 1
+    #at this point, arm has lowered with vacuum on until ADC hit. Vacuum is on, Stepper is live but not moving.
+    sleep(0.25)
+    stepper.arm_dir.value(1)                #direction is reversed to raise arm.
+    print("stepper arm at bottom")
 
-def rotate_back_to_container():
-    Susan.step(_STEPS_TO_OPENING, 0)
+    for i in range(arm_pos):        #step upwards same steps as went downwards.
+        stepper.step_arm()  
+    arm_pos = 0                     #reset arm_pos to 0 once at top.
+    if(adc.checkpillpickup(baseline)):  
+        print("pill still here!\n")   #check if pill is still there
+        sleep(0.25)                  #0.25s delay before dropping pill.
+    else:
+        print("Pill Dropped. Trying again.\n")
+        Vacuum.vacuum_off()
+        sleep(1)
+        pickup_pill()
+    return 0
 
-def calibrate_disc():
-    # Step Susan until the calibration switch trips, then zero Susan's logical position
-    while _cal.value() == 0:
-        Susan.step(1, 0)
-    Susan.pos_deg = 0.0
+def drop_pill():                #Drop Pill will rotate to an opening, drop the pill, and rotate back.
+    print("dropping pill!\n")
+    stepper.rotate_to_opening()
+    Vacuum.vacuum_off()
+    sleep(0.5)
+    print("Pill dropped. Moving back to origin container.")
+    stepper.rotate_back_to_container()
+    return 0
+#endregion
+"-----------------End Pickup and Drop Functions-----------------"
 
-def fullRot_susan():
-    Susan.step(int(round(360.0 / _STEP_DEGREE)), 0)
-
-# --------------------
-# Helpers that use CRANE (arm only)
-# --------------------
-def Lower_arm():
-    #Code for lowering arm
-    return True
-
-def Raise_arm():
-    #code for Raising Arm
-    return True
-
-# --------------------
-# Main dispense sequence (Susan for disc; Crane for arm)
-# --------------------
-def dispensePill(currentpos, destinationpos, amount):
-    """
-    currentpos/destinationpos are container indices (0..9).
-    amount = number of pills to dispense.
-    arm_*_steps let you tune the arm travel without touching the helpers.
-    """
-    rotate_to_container(currentpos, destinationpos)
-
-    for _ in range(amount):
-        #Pickup_Pill()
-        #Detect_Pill()
-        Raise_arm()
-        #Detect_Pill()
-        rotate_to_opening()
-        #Detect_Pill()
-        #Drop_Pill()
-        rotate_back_to_container()
-
-    return True
-
-# Code to update amounts if pills are dispensed.
+"-----------------Update values, Dispenseforcontainer-----------------"
+#region Update/1 dispense sequence
 def update_values(amounts, doses):
     for x in range(len(amounts)):
         amounts[x]=amounts[x]-doses[x]
 
-# Top-level dispenser function
-def dispenser(data):
+def dispensePill(currentpos, destinationpos, amount):
+    
+    
+        stepper.rotate_to_container(currentpos, destinationpos)
+        for i in range(amount):
+            pickup_pill()
+            drop_pill()
+
+            return True
+#endregion
+def Dispenser(data):
     '''
     returns False: not time, True: was time
         If it was time,
             - updates data['last_dose_taken'] with whether the dose was dispensed.
             - updates amounts
     '''
-    # Get the schedule that corresponds to the current time or return if there is no match.
-    current_time=time_unit.now()    # Wrong now because time_unit was done differently.
-
+# Get the schedule that corresponds to the current time or return if there is no match.
+    current_time=time_unit.now()
     doses=[0]
     for x in range(0, len(data['schedule']), _NUM_CONTAINERS+1):
         if (data['schedule'][x]==current_time):
-            doses=data['schedule'][x+1:x+_NUM_CONTAINERS+1]
+            doses=data['schedule'][x+1:x+_NUM_CONTAINERS+1]         #Doses has the array that will be used 
             break
     if (doses==[0]):
         return False    # It was not time to dispense.
     
-    # It is time to dispense. All other dispense code. vvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvv
-    
-    # Trigger Alert
+    #begin dispensing using "doses"
+    "Calibrate, then set current susan position to 0, then loop through dispensePill, using currentpos, i (container number) and then doses[i] for amount."
 
-    # Wait for button
+    stepper.calibrate()                 
+    currentpos = 0
 
-    # Dispense Pills
-    dispensePill()
-    # End other dispense code. ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    for x in range(len(data['amounts'])):
+        if doses[x] > data['amounts'][x]:
+            print(f"insufficient pills in container {x}")
+            return True
 
-    # Update the values based on the schedule for the current time.
+    for i in range(_NUM_CONTAINERS):
+        if doses[i] != 0:
+            dispensePill(currentpos, i, doses[i])
+            currentpos += 1
+            sleep(0.75)     #delay 0.75s after all pills have been dispensed from a container
+
+        
+
+
     update_values(data['amounts'], doses)
     return True         # It was time to dispense.
 
+def reset():
+    stepper.Sleeptoggle('susan', 0)
+    Vacuum.vacuum_off()
 
-# Test Code
-def test_dispenser():
-    data={"schedule": [2, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0,
-                       5, 0, 0, 2, 0, 0, 0, 0, 2, 0, 0,
-                       8, 10, 0, 0, 0, 0, 0, 0, 0, 0, 9],
-            "amounts": [10, 0, 3, 0, 0, 0, 0, 3, 0, 9],
-            "last_dose_taken": True,
-            "init_time": 0}
-    
+"DEBUGGING PURPOSES ONLY::::"
+#region testing
+def stepperadcvacuumtest():
     while(True):
-        wasTime=dispenser(data)
-        print(data)
-        if (wasTime):
-            return
+            try:
+                Vacuum.vacuum_on()
+                sleep(0.4)
+
+                baseline = adc.getbaseline()
+                print("Baseline Value:", baseline)
+                # except Exception as e: print("Initialization error:", e) CHECCK WITH ANDRE
+
+                stepper.arm_slp.value(1) 
+                stepper.arm_dir.value(0)
+                sleep(0.25)
+                stepper.arm_step.value(0)
+                arm_pos = 0
+                for i in range(500):
+                    adc.checkpillpickup(baseline)
+                    stepper.step_arm()
+
+                #at this point, arm has lowered with vacuum on until ADC hit. Vacuum is on, Stepper is live but not moving.
+                sleep(0.25)
+                reset()
+
+            except OSError as e:
+                    print("Buffering...")
+                # print("I2C Error:", e)
+                    sleep(0.01)  # give bus time to recover
+
+data={"schedule": [2, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0,
+                   5, 0, 0, 2, 0, 0, 0, 0, 2, 0, 0,
+                   8, 10, 0, 0, 0, 0, 0, 0, 0, 0, 9],
+    "amounts": [10, 10, 10, 10, 10, 10, 10, 10, 10, 10],
+    "last_dose_taken": True,
+    "init_time": 0}
+
+if __name__ == "__main__":      #TESTING PURPOSES ONLY
+    stepper.step(500)
+    # steppertest.Sleeptoggle('susan', 0)
+    # steppertest.rotate_to_container(0,5)
+    # for i in range(10):
+    #         try:
+    #             vacuumtest.vacuum_on()
+    #             sleep(0.4)
+
+    #             baseline = adctest.getbaseline()
+    #             print("Baseline Value:", baseline)
+    #             # except Exception as e: print("Initialization error:", e) CHECCK WITH ANDRE
+
+    #             steppertest.arm_slp.value(1) 
+    #             steppertest.arm_dir.value(0)
+    #             sleep(0.25)
+    #             steppertest.arm_step.value(0)
+    #             arm_pos = 0
+    #             for i in range(500):
+    #                 adctest.checkpillpickup(baseline)
+    #                 steppertest.step_arm()
+
+    #             #at this point, arm has lowered with vacuum on until ADC hit. Vacuum is on, Stepper is live but not moving.
+    #             sleep(0.25)
+    #             reset()
+
+    #         except OSError as e:
+    #                 print("Buffering...")
+    #             # print("I2C Error:", e)
+    #                 sleep(0.01)  # give bus time to recover
+    reset()
+#endregion
