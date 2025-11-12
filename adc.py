@@ -1,7 +1,7 @@
 from machine import Pin, I2C, PWM
 import time
 import Vacuum
-import Dispenser
+import dispenser
 
 # --- MCP3424 Driver ---
 class MCP3424:
