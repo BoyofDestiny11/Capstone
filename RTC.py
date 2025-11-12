@@ -45,8 +45,8 @@ def clocksetup(I2cv, sclp, sdap):
 
 #time.sleep(1)
 #setup is I2C #, then SCL, then SDA pins.
-rtc = clocksetup(1, 3, 2)
-# ---- Step 2: Read it back ----
-(h, m, s) = rtc.get_time()
-print("RTC time:  {:02d}:{:02d}:{:02d}".format(h, m, s))
-print("Minutes since midnight:", rtc.get_minutes())
+# rtc = clocksetup(1, 3, 2)
+# # ---- Step 2: Read it back ----
+# (h, m, s) = rtc.get_time()
+# print("RTC time:  {:02d}:{:02d}:{:02d}".format(h, m, s))
+# print("Minutes since midnight:", rtc.get_minutes())

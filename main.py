@@ -48,9 +48,13 @@ async def async_loop():
     asyncio.create_task(server)
     
     # Loop for other tasks
+    import RTC
     global data
     while True:
         # Simulate value updates in dispenser for testing
+        rtc = RTC.clocksetup(1, 3, 2)
+        min=rtc.get_minutes()
+        print(f'Time: {min}')
         data["last_dose_taken"]=not data['last_dose_taken']
         memory.save(data)
         print(data)
