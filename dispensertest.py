@@ -1,9 +1,9 @@
 from machine import Pin, PWM, I2C
 from time import sleep
 import time_unit
-import vacuumtest
-import steppertest
-import adctest
+import Vacuum
+import stepper
+import adc
 
 
 "-----------------Initialization-----------------"
@@ -17,46 +17,49 @@ _NUM_CONTAINERS = const(10)             #num containers
 "-----------------Pickup and Drop pill Functions-----------------"
 #region Pickup/Drop
 def pickup_pill(): #COMPLETE THIS
-    vacuumtest.vacuum_on()
+    print("Pickup_Pill Called")
+    Vacuum.vacuum_on() 
+    print("Vacuum on")
     sleep(0.4)
 
-    baseline = adctest.getbaseline()
+    baseline = adc.getbaseline()
     print("Baseline Value:", baseline)
     # except Exception as e: print("Initialization error:", e) CHECCK WITH ANDRE
 
-    steppertest.arm_slp.value(1) 
-    steppertest.arm_dir.value(0)
+    stepper.arm_slp.value(1) 
+    stepper.arm_dir.value(0)
     sleep(0.25)
-    steppertest.arm_step.value(0)
+    stepper.arm_step.value(0)
+    print("stepper motor initialized")
     arm_pos = 0
-    while(not (adctest.checkpillpickup(baseline) and arm_pos <= 100)): #change 100 to whatever step is max depth.
-          steppertest.step_arm()
+    while(not (adc.checkpillpickup(baseline) and arm_pos <= 100)): #change 100 to whatever step is max depth.
+          stepper.step_arm()
           arm_pos += 1
     #at this point, arm has lowered with vacuum on until ADC hit. Vacuum is on, Stepper is live but not moving.
     sleep(0.25)
-    steppertest.arm_dir.value(1)                #direction is reversed to raise arm.
-
+    stepper.arm_dir.value(1)                #direction is reversed to raise arm.
+    print("stepper arm at bottom")
 
     for i in range(arm_pos):        #step upwards same steps as went downwards.
-        steppertest.step_arm()  
+        stepper.step_arm()  
     arm_pos = 0                     #reset arm_pos to 0 once at top.
-    if(adctest.checkpillpickup(baseline)):  
+    if(adc.checkpillpickup(baseline)):  
         print("pill still here!\n")   #check if pill is still there
         sleep(0.25)                  #0.25s delay before dropping pill.
     else:
         print("Pill Dropped. Trying again.\n")
-        vacuumtest.vacuum_off()
+        Vacuum.vacuum_off()
         sleep(1)
         pickup_pill()
     return 0
 
 def drop_pill():                #Drop Pill will rotate to an opening, drop the pill, and rotate back.
     print("dropping pill!\n")
-    steppertest.rotate_to_opening()
-    vacuumtest.vacuum_off()
+    stepper.rotate_to_opening()
+    Vacuum.vacuum_off()
     sleep(0.5)
     print("Pill dropped. Moving back to origin container.")
-    steppertest.rotate_back_to_container()
+    stepper.rotate_back_to_container()
     return 0
 #endregion
 "-----------------End Pickup and Drop Functions-----------------"
@@ -70,7 +73,7 @@ def update_values(amounts, doses):
 def dispensePill(currentpos, destinationpos, amount):
     
     
-        steppertest.rotate_to_container(currentpos, destinationpos)
+        stepper.rotate_to_container(currentpos, destinationpos)
         for i in range(amount):
             pickup_pill()
             drop_pill()
@@ -97,7 +100,7 @@ def Dispenser(data):
     #begin dispensing using "doses"
     "Calibrate, then set current susan position to 0, then loop through dispensePill, using currentpos, i (container number) and then doses[i] for amount."
 
-    steppertest.calibrate()                 
+    stepper.calibrate()                 
     currentpos = 0
 
     for x in range(len(data['amounts'])):
@@ -118,33 +121,75 @@ def Dispenser(data):
     return True         # It was time to dispense.
 
 def reset():
-    steppertest.Sleeptoggle('susan', 0)
-    vacuumtest.vacuum_off()
+    stepper.Sleeptoggle('susan', 0)
+    Vacuum.vacuum_off()
+
+"DEBUGGING PURPOSES ONLY::::"
+#region testing
+def stepperadcvacuumtest():
+    while(True):
+            try:
+                Vacuum.vacuum_on()
+                sleep(0.4)
+
+                baseline = adc.getbaseline()
+                print("Baseline Value:", baseline)
+                # except Exception as e: print("Initialization error:", e) CHECCK WITH ANDRE
+
+                stepper.arm_slp.value(1) 
+                stepper.arm_dir.value(0)
+                sleep(0.25)
+                stepper.arm_step.value(0)
+                arm_pos = 0
+                for i in range(500):
+                    adc.checkpillpickup(baseline)
+                    stepper.step_arm()
+
+                #at this point, arm has lowered with vacuum on until ADC hit. Vacuum is on, Stepper is live but not moving.
+                sleep(0.25)
+                reset()
+
+            except OSError as e:
+                    print("Buffering...")
+                # print("I2C Error:", e)
+                    sleep(0.01)  # give bus time to recover
+
+data={"schedule": [2, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0,
+                   5, 0, 0, 2, 0, 0, 0, 0, 2, 0, 0,
+                   8, 10, 0, 0, 0, 0, 0, 0, 0, 0, 9],
+    "amounts": [10, 10, 10, 10, 10, 10, 10, 10, 10, 10],
+    "last_dose_taken": True,
+    "init_time": 0}
 
 if __name__ == "__main__":      #TESTING PURPOSES ONLY
-    while(True):
-        try:
-            vacuumtest.vacuum_on()
-            sleep(0.4)
+    stepper.step(500)
+    # steppertest.Sleeptoggle('susan', 0)
+    # steppertest.rotate_to_container(0,5)
+    # for i in range(10):
+    #         try:
+    #             vacuumtest.vacuum_on()
+    #             sleep(0.4)
 
-            baseline = adctest.getbaseline()
-            print("Baseline Value:", baseline)
-            # except Exception as e: print("Initialization error:", e) CHECCK WITH ANDRE
+    #             baseline = adctest.getbaseline()
+    #             print("Baseline Value:", baseline)
+    #             # except Exception as e: print("Initialization error:", e) CHECCK WITH ANDRE
 
-            steppertest.arm_slp.value(1) 
-            steppertest.arm_dir.value(0)
-            sleep(0.25)
-            steppertest.arm_step.value(0)
-            arm_pos = 0
-            for i in range(500):
-                adctest.checkpillpickup(baseline)
-                steppertest.step_arm()
+    #             steppertest.arm_slp.value(1) 
+    #             steppertest.arm_dir.value(0)
+    #             sleep(0.25)
+    #             steppertest.arm_step.value(0)
+    #             arm_pos = 0
+    #             for i in range(500):
+    #                 adctest.checkpillpickup(baseline)
+    #                 steppertest.step_arm()
 
-            #at this point, arm has lowered with vacuum on until ADC hit. Vacuum is on, Stepper is live but not moving.
-            sleep(0.25)
-            reset()
+    #             #at this point, arm has lowered with vacuum on until ADC hit. Vacuum is on, Stepper is live but not moving.
+    #             sleep(0.25)
+    #             reset()
 
-        except OSError as e:
-                print("Buffering...")
-            # print("I2C Error:", e)
-                sleep(0.01)  # give bus time to recover
+    #         except OSError as e:
+    #                 print("Buffering...")
+    #             # print("I2C Error:", e)
+    #                 sleep(0.01)  # give bus time to recover
+    reset()
+#endregion
