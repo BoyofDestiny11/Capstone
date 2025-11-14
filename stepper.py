@@ -39,7 +39,6 @@ def step(n, dir = 0):                   #function that performs n steps in dir d
             # if susan_pos == 360: susan_pos = 0      #position cycles 360 degrees.
             # if susan_pos == -1: susan_pos = 359
             print(f"step {i/2 + 1} completed")
-        sleep(susan_delay)
     sleep(.25)
     # susan_slp.value(0)
 
