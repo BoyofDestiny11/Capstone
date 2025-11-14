@@ -181,55 +181,19 @@ data={"schedule": [2, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0,
     "last_dose_taken": True,
     "init_time": 0}
 
-if __name__ == "__main__":      #TESTING PURPOSES ONLY
+def lower_util_ADC_test():
     arm_pos = 0
     stepper.Sleeptoggle('arm', 1)
     sleep(0.25)
     pickup_pill()
-    # stepper.lowertomaxdepth()
     sleep(1)
     stepper.Sleeptoggle('arm', 0)
     reset()
-    # Vacuum.vacuum_on()
-    # sleep(1)
-    # stepper.calibratearm()
-    # stepper.Sleeptoggle('susan', 1)
-    # stepper.lowertomaxdepth()
-    # while True:
-    #      input()
-    #      x = x + 1
-    #      stepper.step_arm(0)
-    #      print(x)
-    # stepper.lowertomaxdepth()
-    # Vacuum.vacuum_off()
-    # sleep(0.5)
-    # stepper.shakearm()
-    # steppertest.Sleeptoggle('susan', 0)
-    # steppertest.rotate_to_container(0,5)
-    # for i in range(10):
-    #         try:
-    #             vacuumtest.vacuum_on()
-    #             sleep(0.4)
 
-    #             baseline = adctest.getbaseline()
-    #             print("Baseline Value:", baseline)
-    #             # except Exception as e: print("Initialization error:", e) CHECCK WITH ANDRE
-
-    #             steppertest.arm_slp.value(1) 
-    #             steppertest.arm_dir.value(0)
-    #             sleep(0.25)
-    #             steppertest.arm_step.value(0)
-    #             arm_pos = 0
-    #             for i in range(500):
-    #                 adctest.checkpillpickup(baseline)
-    #                 steppertest.step_arm()
-
-    #             #at this point, arm has lowered with vacuum on until ADC hit. Vacuum is on, Stepper is live but not moving.
-    #             sleep(0.25)
-    # reset()
-
-    #         except OSError as e:
-    #                 print("Buffering...")
-    #             # print("I2C Error:", e)
-    #                 sleep(0.01)  # give bus time to recover
+if __name__ == "__main__":      #TESTING PURPOSES ONLY
+    try:
+        lower_util_ADC_test()
+    except KeyboardInterrupt:
+        reset()
+        print("Stopped")
 #endregion
