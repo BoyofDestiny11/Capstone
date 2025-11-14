@@ -1,3 +1,4 @@
 .micropico
 .vscode/*
 *.txt
+adc_tester.py
