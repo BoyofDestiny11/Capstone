@@ -102,8 +102,8 @@ def raise_arm():
     depth_reached = 0
     while(arm_cal.value() == 1):
         step_arm(1)
-        test = test + 1
-    for x in range(15):
+        depth_reached = depth_reached + 1
+    for x in range(16):
         step_arm(0)
     sleep(0.25)
     print(depth_reached)

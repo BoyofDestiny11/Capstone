@@ -12,7 +12,7 @@ _NUM_CONTAINERS = const(10)             #num containers
 global arm_pos                          #current arbitrary position of arm. From 0 (top, calibrated position) to 628 (bottom, MAX_DEPTH).
 global susan_pos                        #current container position of the susan.
 global attempt                          #attempt # to avoid infinite loop of pickup pill
-# adc = adctest.adcpinsetup(0,1,0)          #DO WE NEED THIS?
+sensor = adc.adcpinsetup(0,1,0)          #DO WE NEED THIS?
 #endregion
 
 "-----------------End Initialization-----------------"
@@ -22,13 +22,13 @@ def calcheck():
 "-----------------Pickup and Drop pill Functions-----------------"
 #region Pickup/Drop
 def pickup_pill(): #COMPLETE THIS
-
+    global arm_pos
 #turn on vacuum and wait for it to stabilize
     Vacuum.vacuum_on() 
     sleep(0.4)
 
 #getbaseline value for adc.
-    baseline = adc.getbaseline()
+    baseline = adc.getbaseline(sensor)
     print("Baseline Value:", baseline)
 # except Exception as e: print("Initialization error:", e) CHECCK WITH ANDRE
     sleep(0.1)
@@ -37,7 +37,7 @@ def pickup_pill(): #COMPLETE THIS
     stepper.arm_step.value(0)
     
 
-    while(not (adc.checkpillpickup(baseline) and arm_pos <= stepper.MAX_DEPTH)):
+    while(not (adc.checkpillpickup(sensor, baseline)) and arm_pos <= stepper.MAX_DEPTH):
           stepper.step_arm(0)
           arm_pos += 1
 #at this point, arm has lowered with vacuum on until ADC hit. Vacuum is on, Stepper is live but not moving.
@@ -48,21 +48,21 @@ def pickup_pill(): #COMPLETE THIS
     arm_pos = 0                     #reset arm_pos to 0 once at top.
 
 #check if pill is still there when at the top.
-    if(adc.checkpillpickup(baseline)):
-        attempt = 0  
-        sleep(0.25)                  #0.25s delay before dropping pill.
-        return True
+    # if(adc.checkpillpickup(baseline)):
+    #     attempt = 0  
+    #     sleep(0.25)                  #0.25s delay before dropping pill.
+    #     return True
 
-    else:                            #if pill has dropped, reset, and try again after 1s
-        Vacuum.vacuum_off()
-        sleep(1)
-        attempt = attempt + 1
-        if(attempt <= 5):
-            pickup_pill()
-        else:
-             print(f'Could no pickup pill after {attempt} attempts')
-             attempt = 0
-        return False
+    # else:                            #if pill has dropped, reset, and try again after 1s
+    #     Vacuum.vacuum_off()
+    #     sleep(1)
+    #     attempt = attempt + 1
+    #     if(attempt <= 5):
+    #         pickup_pill()
+    #     else:
+    #          print(f'Could no pickup pill after {attempt} attempts')
+    #          attempt = 0
+    #     return False
 
 def drop_pill():                #Drop Pill will rotate to an opening, drop the pill, and rotate back.
     stepper.rotate_to_opening()
@@ -141,6 +141,7 @@ def Dispenser(data):
 
 def reset():
     stepper.Sleeptoggle('susan', 0)
+    stepper.Sleeptoggle('arm', 0)
     Vacuum.vacuum_off()
 
 "DEBUGGING PURPOSES ONLY::::"
@@ -181,6 +182,14 @@ data={"schedule": [2, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0,
     "init_time": 0}
 
 if __name__ == "__main__":      #TESTING PURPOSES ONLY
+    arm_pos = 0
+    stepper.Sleeptoggle('arm', 1)
+    sleep(0.25)
+    pickup_pill()
+    # stepper.lowertomaxdepth()
+    sleep(1)
+    stepper.Sleeptoggle('arm', 0)
+    reset()
     # Vacuum.vacuum_on()
     # sleep(1)
     # stepper.calibratearm()
@@ -217,7 +226,7 @@ if __name__ == "__main__":      #TESTING PURPOSES ONLY
 
     #             #at this point, arm has lowered with vacuum on until ADC hit. Vacuum is on, Stepper is live but not moving.
     #             sleep(0.25)
-    reset()
+    # reset()
 
     #         except OSError as e:
     #                 print("Buffering...")
