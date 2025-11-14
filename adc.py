@@ -1,7 +1,6 @@
 from machine import Pin, I2C, PWM
 import time
 import Vacuum
-import dispenser
 
 # --- MCP3424 Driver ---
 class MCP3424:
@@ -73,7 +72,7 @@ def adcpinsetup(I2c, sclvalue, sdavalue):
 
 
 
-def getbaseline():
+def getbaseline(adc):
    
     adc.configure(channel=1, resolution=12, gain=1, continuous=False)
     time.sleep(0.003)
@@ -81,15 +80,17 @@ def getbaseline():
     print("baseline is ", baseline)
     return baseline
 
-def readadcvalue():
+def readadcvalue(adc):
+    
     adc.configure(channel=1, resolution=12, gain=1, continuous=False)
     time.sleep(0.003)
     value = adc.read()
     return value
+
 #For right now, this code returns a 0 for a pill has not been picked up OR a pill pickup error
 # and a 1 for if a pill has been picked up. I also have the print commands but these can be commented out. 
-def checkpillpickup(baseline):
-    value = readadcvalue()
+def checkpillpickup(adc, baseline):
+    value = readadcvalue(adc)
     print("ADC Raw Value:", value)
     if value is None or baseline is None:
         print ("ADC Read Error Delay")
@@ -98,35 +99,35 @@ def checkpillpickup(baseline):
         print (" Pill picked up, raw value", value, "baseline ", baseline)
         return 1
 
+# if __name__ == "__main__":
+#     try:        
+#         #baseline and value need the adc var to be called adc in order to read in any value. 
+#         #This main code is just a placeholder for Luke to see how the OSError and the adc setup is supposed to flow.
+#         # DO NOT INCLUDE THIS IN THE FINAL DESIGN
+#         adc_gh = adcpinsetup(0, 1, 0)  
+#         Vacuum.vacuum_on()
+#         time.sleep(0.5)
+#         baseline = getbaseline(adc_gh)
+#         #Dispenser.rotate_to_container(0,6)
 
-try:        
-    #baseline and value need the adc var to be called adc in order to read in any value. 
-    #This main code is just a placeholder for Luke to see how the OSError and the adc setup is supposed to flow.
-    # DO NOT INCLUDE THIS IN THE FINAL DESIGN
-    adc = adcpinsetup(0, 1, 0)
-    Vacuum.vacuum_on()
-    time.sleep(0.5)
-    baseline = getbaseline()
-    #Dispenser.rotate_to_container(0,6)
+#         #print("Baseline Value:", baseline)
+#     except Exception as e: print("Initialization error:", e)
 
-    #print("Baseline Value:", baseline)
-except Exception as e: print("Initialization error:", e)
+#     while(True):
+#         try:
 
-while(True):
-    try:
+#             checkpillpickup(adc_gh, baseline)
+            
 
-        checkpillpickup(baseline)
-         
+#             '''print("Placeholder")
+#             time.sleep(5)
+#             Dispenser.rotate_to_container(0,6)
+#             '''
+#                     # print("Pill picked up!")
+#                 # voltage = to_voltage(value)
+#                 #print("Voltage:", voltage)
 
-        '''print("Placeholder")
-        time.sleep(5)
-        Dispenser.rotate_to_container(0,6)
-        '''
-                # print("Pill picked up!")
-            # voltage = to_voltage(value)
-            #print("Voltage:", voltage)
-
-    except OSError as e:
-            print("Buffering...")
-           # print("I2C Error:", e)
-            time.sleep(0.01)  # give bus time to recover
+#         except OSError as e:
+#                 print("Buffering...")
+#             # print("I2C Error:", e)
+#                 time.sleep(0.01)  # give bus time to recover
