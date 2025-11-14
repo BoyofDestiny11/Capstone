@@ -1,6 +1,6 @@
 from machine import Pin, PWM, I2C
 from time import sleep
-import time_unit
+import RTC
 import Vacuum
 import stepper
 import adc
@@ -100,7 +100,7 @@ def Dispenser(data):
             - updates amounts
     '''
 # Get the schedule that corresponds to the current time or return if there is no match.
-    current_time=time_unit.now()
+    current_time=RTC.get_time()
     doses=[0]
     for x in range(0, len(data['schedule']), _NUM_CONTAINERS+1):
         if (data['schedule'][x]==current_time):
