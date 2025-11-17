@@ -28,7 +28,7 @@ def pickup_pill(): #COMPLETE THIS
     sleep(0.4)
 
 #getbaseline value for adc.
-    baseline = adc.getbaseline(sensor)
+    baseline = adc.readadcvalue(sensor)
     print("Baseline Value:", baseline)
 # except Exception as e: print("Initialization error:", e) CHECCK WITH ANDRE
     sleep(0.1)
@@ -36,10 +36,13 @@ def pickup_pill(): #COMPLETE THIS
 #set arm stepper output to 0 to prepare for lowering.
     stepper.arm_step.value(0)
     
-
-    while(not (adc.checkpillpickup(sensor, baseline)) and arm_pos <= stepper.MAX_DEPTH):
-          stepper.step_arm(0)
-          arm_pos += 1
+    try:
+        while(not (adc.checkpillpickup(sensor, baseline)) and arm_pos <= stepper.MAX_DEPTH):
+            stepper.step_arm(0)
+            arm_pos += 1
+    except OSError as e:
+        sleep(.01)
+        return None
 #at this point, arm has lowered with vacuum on until ADC hit. Vacuum is on, Stepper is live but not moving.
     sleep(0.25) #delay to ensure pill is secure.
 
@@ -182,6 +185,7 @@ data={"schedule": [2, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0,
     "init_time": 0}
 
 def lower_util_ADC_test():
+    global arm_pos
     arm_pos = 0
     stepper.Sleeptoggle('arm', 1)
     sleep(0.25)
@@ -194,6 +198,7 @@ if __name__ == "__main__":      #TESTING PURPOSES ONLY
     try:
         lower_util_ADC_test()
     except KeyboardInterrupt:
+        stepper.raise_arm()
         reset()
         print("Stopped")
 #endregion
