@@ -80,8 +80,7 @@ def getbaseline(adc):
     print("baseline is ", baseline)
     return baseline
 
-def readadcvalue(adc):
-    
+def readadcvalue(adc):  
     adc.configure(channel=1, resolution=12, gain=1, continuous=False)
     time.sleep(0.003)
     value = adc.read()
