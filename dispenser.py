@@ -93,6 +93,7 @@ def dispensePill(current, destination, amount):
             return True
 #endregion
 def Dispenser(data):
+    global arm_pos
     '''
     returns False: not time, True: was time
         If it was time,
@@ -185,6 +186,7 @@ data={"schedule": [2, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0,
 
 def lower_util_ADC_test():
 
+    global arm_pos
     arm_pos = 0
     stepper.Sleeptoggle('arm', 1)
     sleep(0.25)
