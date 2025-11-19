@@ -2,15 +2,15 @@ from machine import Pin
 from time import sleep
 
 # Pin Setup
-susan_dir = Pin(19, Pin.OUT)                 #direction pin for susan
-susan_step = Pin(20, Pin.OUT)                #step pin for susan
-susan_slp = Pin(21, Pin.OUT)                 #slp pin for susan
-susan_cal = Pin(28, Pin.IN)                         #calibration pin CHANGE THIS
+# susan_dir = Pin(19, Pin.OUT)                 #direction pin for susan
+# susan_step = Pin(20, Pin.OUT)                #step pin for susan
+# susan_slp = Pin(21, Pin.OUT)                 #slp pin for susan
+# susan_cal = Pin(28, Pin.IN)                         #calibration pin CHANGE THIS
 
 
-arm_dir = Pin(16, Pin.OUT)                    #direction pin for arm CHANGE THIS
-arm_step = Pin(17, Pin.OUT)                   #step pin for arm CHANGE THIS
-arm_slp = Pin(18, Pin.OUT)                    #sleep pin for arm CHANGE THIS
+arm_dir = Pin(19, Pin.OUT)                    #direction pin for arm CHANGE THIS
+arm_step = Pin(20, Pin.OUT)                   #step pin for arm CHANGE THIS
+arm_slp = Pin(22, Pin.OUT)                    #sleep pin for arm CHANGE THIS
 arm_cal = Pin(27, Pin.IN)
 
 containers = [0, 36, 72, 108, 144, 180, 216, 252, 288, 324] #update the container with location of that container in degrees.
@@ -127,3 +127,5 @@ def lowertomaxdepth():
     arm_slp.value(1)
     for x in range(628):
         step_arm(0)
+
+lowertomaxdepth()
