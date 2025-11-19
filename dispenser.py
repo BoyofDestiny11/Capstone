@@ -137,6 +137,8 @@ def Dispenser(data):
 
 
     update_values(data['amounts'], doses)
+    stepper.Sleeptoggle('susan', 0)
+    stepper.Sleeptoggle('arm', 0)
     return True         # It was time to dispense.
 
 def reset():
