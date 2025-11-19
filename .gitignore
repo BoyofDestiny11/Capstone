@@ -2,5 +2,4 @@
 .vscode/*
 *.txt
 adc_tester.py
-*tester.py
 *.csv
