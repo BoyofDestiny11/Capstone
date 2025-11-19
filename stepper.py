@@ -9,7 +9,7 @@ from time import sleep
 
 
 arm_dir = Pin(19, Pin.OUT)                    #direction pin for arm CHANGE THIS
-arm_step = Pin(20, Pin.OUT)                   #step pin for arm CHANGE THIS
+arm_step = Pin(18, Pin.OUT)                   #step pin for arm CHANGE THIS
 arm_slp = Pin(22, Pin.OUT)                    #sleep pin for arm CHANGE THIS
 arm_cal = Pin(27, Pin.IN)
 
@@ -127,5 +127,3 @@ def lowertomaxdepth():
     arm_slp.value(1)
     for x in range(628):
         step_arm(0)
-
-lowertomaxdepth()
