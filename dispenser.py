@@ -25,7 +25,7 @@ def pickup_pill(): #COMPLETE THIS
     global arm_pos
 #turn on vacuum and wait for it to stabilize
     Vacuum.vacuum_on() 
-    sleep(0.4)
+    sleep(0.6)
 
 #getbaseline value for adc.
     baseline = adc.getbaseline(sensor)
@@ -37,38 +37,45 @@ def pickup_pill(): #COMPLETE THIS
     stepper.arm_step.value(0)
     
 
-    while(not (adc.checkpillpickup(sensor, baseline)) and arm_pos <= stepper.MAX_DEPTH):
-          stepper.step_arm(0)
-          arm_pos += 1
+    while(arm_pos <= stepper.MAX_DEPTH):
+            # if(arm_pos <= 250):
+            #     stepper.step_arm(0.001)
+            #     arm_pos = arm_pos + 1
+            # else:
+                while(not (adc.checkpillpickup(sensor, baseline)) and arm_pos <= stepper.MAX_DEPTH):
+                    stepper.step_arm(0.001)
+                    arm_pos = arm_pos + 1
+                    print(f'step # {arm_pos}')
 #at this point, arm has lowered with vacuum on until ADC hit. Vacuum is on, Stepper is live but not moving.
     sleep(0.25) #delay to ensure pill is secure.
 
 #raise arm back to top position. USE THIS TO RECORD DEPTH REACHED FOR MEMORY IF NEEDED!
-    stepper.raise_arm()
+    stepper.raise_arm(.001)
     arm_pos = 0                     #reset arm_pos to 0 once at top.
+    sleep(0.1)
 
 #check if pill is still there when at the top.
-    # if(adc.checkpillpickup(baseline)):
-    #     attempt = 0  
-    #     sleep(0.25)                  #0.25s delay before dropping pill.
-    #     return True
+    if(adc.checkpillpickup(baseline)):
+        attempt = 0  
+        sleep(0.25)                  #0.25s delay before dropping pill.
+        return True
 
-    # else:                            #if pill has dropped, reset, and try again after 1s
-    #     Vacuum.vacuum_off()
-    #     sleep(1)
-    #     attempt = attempt + 1
-    #     if(attempt <= 5):
-    #         pickup_pill()
-    #     else:
-    #          print(f'Could no pickup pill after {attempt} attempts')
-    #          attempt = 0
-    #     return False
+    else:                            #if pill has dropped, reset, and try again after 1s
+        Vacuum.vacuum_off()
+        sleep(1)
+        attempt = attempt + 1
+        if(attempt <= 5):
+            pickup_pill()
+        else:
+             print(f'Could no pickup pill after {attempt} attempts')
+             attempt = 0
+        return False
 
 def drop_pill():                #Drop Pill will rotate to an opening, drop the pill, and rotate back.
     stepper.rotate_to_opening()
     susan_pos = susan_pos + 0.5
     Vacuum.vacuum_off()
-    sleep(0.5)
+    sleep(3)
     print("Pill dropped. Moving back to origin container.")
     stepper.rotate_back_to_container()
     susan_pos = susan_pos - 0.5
@@ -83,8 +90,10 @@ def update_values(amounts, doses):
         amounts[x]=amounts[x]-doses[x]
 
 def dispensePill(current, destination, amount):
-    
-    
+        stepper.Sleeptoggle('arm', 1)
+        stepper.Sleeptoggle('susan', 1)
+        sleep(0.2)
+
         stepper.rotate_to_container(current, destination)
         for i in range(amount):
             pickup_pill()
@@ -197,11 +206,42 @@ def lower_util_ADC_test():
 
 if __name__ == "__main__":
     try:
-         Vacuum.vacuum_on()
-         sleep(0.75)
-         baseline = adc.getbaseline(sensor)
-         while(not (adc.checkpillpickup(sensor, baseline)) and arm_pos <= stepper.MAX_DEPTH):
-          stepper.step_arm(0)
+        arm_pos = 0
+        # Vacuum.vacuum_on()
+        # sleep(0.75)
+        # stepper.Sleeptoggle('arm', 1)
+        # stepper.arm_step.value(0)
+        # stepper.lowertomaxdepth()
+        # sleep(0.1)
+        # stepper.raise_arm()
+        stepper.Sleeptoggle('susan', 1)
+        # sleep(0.01)
+        # stepper.calibrate()
+        # sleep(0.25)
+        # stepper.rotate_to_container(0,8)
+
+        stepper.Sleeptoggle('arm', 1)
+        stepper.arm_dir.value(0)
+        Vacuum.vacuum_on()
+        sleep(0.75)
+        stepper.raise_arm(0.001)
+        baseline = adc.getbaseline(sensor)
+        # while(arm_pos <= stepper.MAX_DEPTH):
+        #     if(arm_pos <= 250):
+        #         stepper.step_arm(0.001)
+        #         arm_pos = arm_pos + 1
+        #     else:
+        while(not (adc.checkpillpickup(sensor, baseline)) and arm_pos <= stepper.MAX_DEPTH):
+            stepper.step_arm(0.001)
+            arm_pos = arm_pos + 1
+            print(f'step # {arm_pos}')
+        sleep(0.25)
+        stepper.raise_arm(0.001)
+        sleep(0.1)
+        stepper.rotate_to_opening()
+        Vacuum.vacuum_off()
+        sleep(3)
+        stepper.rotate_back_to_container()
         # Vacuum.vacuum_on()
         # sleep(0.75)
         # stepper.arm_step.value(0)
