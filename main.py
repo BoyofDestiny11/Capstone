@@ -59,7 +59,7 @@ async def async_loop():
         # data["last_dose_taken"]=not data['last_dose_taken']
         # memory.save(data)
         # print(data)
-        # await asyncio.sleep(10)
+        await asyncio.sleep(10)
         dispenser.Dispenser(data)
 
 # Test Functions for main-level

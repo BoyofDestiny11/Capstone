@@ -13,6 +13,7 @@ global arm_pos                          #current arbitrary position of arm. From
 global susan_pos                        #current container position of the susan.
 global attempt                          #attempt # to avoid infinite loop of pickup pill
 sensor = adc.adcpinsetup(0,1,0)          #DO WE NEED THIS?
+clock = RTC.clocksetup(1,3,2)
 #endregion
 
 "-----------------End Initialization-----------------"
@@ -93,8 +94,8 @@ def update_values(amounts, doses):
         amounts[x]=amounts[x]-doses[x]
 
 def dispensePill(current, destination, amount):
-        stepper.Sleeptoggle('arm', 1)
-        stepper.Sleeptoggle('susan', 1)
+        # stepper.Sleeptoggle('arm', 1)
+        # stepper.Sleeptoggle('susan', 1)
         sleep(0.2)
 
         stepper.rotate_to_container(current, destination)
@@ -114,7 +115,7 @@ def Dispenser(data):
             - updates amounts
     '''
 # Get the schedule that corresponds to the current time or return if there is no match.
-    current_time=RTC.get_time()
+    current_time=clock.get_time()
     doses=[0]
     for x in range(0, len(data['schedule']), _NUM_CONTAINERS+1):
         if (data['schedule'][x]==current_time):
@@ -128,7 +129,6 @@ def Dispenser(data):
     #unsleep both steppers and bring both to 0 position:::
     stepper.Sleeptoggle('susan', 1)
     stepper.Sleeptoggle('arm', 1)
-    sleep(0.25)
     stepper.raise_arm()
     arm_pos = 0
     stepper.calibrate()                 
@@ -139,14 +139,15 @@ def Dispenser(data):
     for x in range(len(data['amounts'])):
         if doses[x] > data['amounts'][x]:
             print(f"insufficient pills in container {x}")
+            data['last_dose_take'] = False
             return True
 
     for i in range(_NUM_CONTAINERS):
         if doses[i] != 0:
             dispensePill(susan_pos, i, doses[i])
-            susan_pos += 1
+            susan_pos = i
             sleep(0.75)     #delay 0.75s after all pills have been dispensed from a container
-
+    data['last_dose_taken'] = True
         
 
 
