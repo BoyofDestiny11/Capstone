@@ -196,14 +196,43 @@ def lower_util_ADC_test():
     reset()
 
 if __name__ == "__main__":
-    stepper.lowertomaxdepth()
-    # try:
+    try:
+         Vacuum.vacuum_on()
+         sleep(0.75)
+         baseline = adc.getbaseline(sensor)
+         while(not (adc.checkpillpickup(sensor, baseline)) and arm_pos <= stepper.MAX_DEPTH):
+          stepper.step_arm(0)
+        # Vacuum.vacuum_on()
+        # sleep(0.75)
+        # stepper.arm_step.value(0)
+        # stepper.susan_step.value(0)
+        # stepper.arm_dir.value(0)
+        # stepper.susan_dir.value(0)
+        # stepper.Sleeptoggle('arm', 1)
+        # stepper.Sleeptoggle('susan', 1)
+        # sleep(0.05)
+        # stepper.calibrate()
+        # sleep(0.1)
+        # Vacuum.vacuum_on()
+        # sleep(0.75)
+        # stepper.Sleeptoggle('susan', 0)
+        # # stepper.rotate_to_container(0, 5)
+        # # stepper.step(100, 0)
+        
+        # stepper.lowertomaxdepth()
+        # sleep(0.2)
+        # stepper.raise_arm()
+        # sleep(0.1)
+        # stepper.rotate_to_opening()
+        # sleep(0.1)
+        # # Vacuum.vacuum_off()
+        # sleep(1)
+        # stepper.rotate_back_to_container()
     #     lower_util_ADC_test()
-    # except KeyboardInterrupt:
-    #     reset()
-    #     print("Stopped")
-    # finally:
-    #     reset()
-    #     Vacuum.vacuum_off()
+    except KeyboardInterrupt:
+        reset()
+        print("Stopped")
+    finally:
+         sleep(2)
+         reset()
     
-#endregion

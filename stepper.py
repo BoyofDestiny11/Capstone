@@ -17,9 +17,9 @@ containers = [0, 36, 72, 108, 144, 180, 216, 252, 288, 324] #update the containe
 
 #PARAMETERS
 step_degree = 1.8/4                       # number of degrees per step.
-susan_delay = 0.005                      #1/2 susan_delay between steps
-arm_delay = 0.005                        #1/2 of arm delay
-steps_to_opening = 20                   #10 x microstep value
+susan_delay = 0.01                      #1/2 susan_delay between steps
+arm_delay = 0.01                        #1/2 of arm delay
+steps_to_opening = 40                   #10 x microstep value
 MAX_DEPTH = 628
 
 def step(n, dir = 0):                   #function that performs n steps in dir direction (0 = forward, 1 = backwards.) Default is forwards.
@@ -31,25 +31,28 @@ def step(n, dir = 0):                   #function that performs n steps in dir d
     susan_dir.value(dir)
     sleep(0.25)
     susan_step.value(0)
-    for i in range(2 * n):              # 2 * n because each step needs 1 on pulse and 1 off pulse.
-        susan_step.value(not susan_step.value())
-        if i % 2 == 0 :                 #every positive step signal, increment position by however far in degrees the motor has moved
-            # if dir == 0: susan_pos += step_degree
-            # if dir == 1: susan_pos -= step_degree
-            # if susan_pos == 360: susan_pos = 0      #position cycles 360 degrees.
-            # if susan_pos == -1: susan_pos = 359
-            print(f"step {i/2 + 1} completed")
+    print(f'stepping {n} steps in {dir} direction')
+    for i in range(n):              # 2 * n because each step needs 1 on pulse and 1 off pulse.
+        susan_step.value(1)
+        sleep(susan_delay)
+        susan_step.value(0)
+
+        # if i % 2 == 0 :                 #every positive step signal, increment position by however far in degrees the motor has moved
+        #     # if dir == 0: susan_pos += step_degree
+        #     # if dir == 1: susan_pos -= step_degree
+        #     # if susan_pos == 360: susan_pos = 0      #position cycles 360 degrees.
+        #     # if susan_pos == -1: susan_pos = 359
+        #     print(f"step {i/2 + 1} completed")
     sleep(.25)
     # susan_slp.value(0)
 
 def calibrate():
     susan_dir.value(0)
     # susan_slp.value(1)
-    susan_step.value(0)
     while susan_cal.value() == 1:            #step until calibrated
-         susan_step.value(1)
-         sleep(0.0025)
          susan_step.value(0)
+         sleep(susan_delay)
+         susan_step.value(1)
     print("calibrated.\n")
     sleep(.2)
     # susan_slp(0)
@@ -62,10 +65,10 @@ def calcstep(current, destination):
     delta = dst_deg - cur_deg
 
     if destination >= current:
-        direction = 0                   # forward (increasing degrees)
+        direction = 1                   # forward (increasing degrees)
         degrees = abs(delta)
     else:
-        direction = 1                   # backward (decreasing degrees)
+        direction = 0                   # backward (decreasing degrees)
         degrees = abs(delta)
 
     steps = degrees / step_degree
@@ -90,10 +93,11 @@ def Sleeptoggle(motor, value):      #'susan', 0 sleeps susan etc..
         arm_slp.value(value)
 
 def step_arm(direction): #increments Arm by 1 step, 0 is down, 1 is up.
+    arm_step.value(0)
     arm_dir.value(direction)
-    arm_step.value(not arm_step.value())
+    arm_step.value(1)
     sleep(arm_delay)
-    arm_step.value(not arm_step.value())
+    arm_step.value(0)
     # print("stepping 1 time")
     return 0
 
@@ -124,6 +128,6 @@ def shakearm():
     arm_slp.value(0)
 
 def lowertomaxdepth():
-    arm_slp.value(1)
-    for x in range(628):
+    # arm_slp.value(1)
+    for x in range(575):
         step_arm(0)
