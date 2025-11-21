@@ -2,10 +2,10 @@ from machine import Pin
 from time import sleep
 
 # Pin Setup
-# susan_dir = Pin(19, Pin.OUT)                 #direction pin for susan
-# susan_step = Pin(20, Pin.OUT)                #step pin for susan
-# susan_slp = Pin(21, Pin.OUT)                 #slp pin for susan
-# susan_cal = Pin(28, Pin.IN)                         #calibration pin CHANGE THIS
+susan_dir = Pin(16, Pin.OUT)                 #direction pin for susan
+susan_step = Pin(17, Pin.OUT)                #step pin for susan
+susan_slp = Pin(26, Pin.OUT)                 #slp pin for susan
+susan_cal = Pin(28, Pin.IN)                         #calibration pin CHANGE THIS
 
 
 arm_dir = Pin(19, Pin.OUT)                    #direction pin for arm CHANGE THIS
