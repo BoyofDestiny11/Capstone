@@ -10,7 +10,7 @@ class MCP3424:
         self.resolution = 12
         self.config = 0x00
 
-    def configure(self, channel=1, resolution=12, gain=1, continuous=False):
+    def configure(self, resolution = 12, channel=1, gain=1, continuous=False):
         chan_bits = {1: 0x00, 2: 0x20, 3: 0x40, 4: 0x60}[channel]
         res_bits = {12: 0x00, 14: 0x04, 16: 0x08, 18: 0x0C}[resolution]
         gain_bits = {1: 0x00, 2: 0x01, 4: 0x02, 8: 0x03}[gain]
@@ -81,7 +81,7 @@ def adcpinsetup(I2c, sclvalue, sdavalue):
 
 def getbaseline(adc):
    
-    adc.configure(channel=1, resolution=14, gain=1, continuous=False)
+    adc.configure(channel=1, resolution=12, gain=1, continuous=False)
     time.sleep(0.003)
     baseline = adc.read()
     print("baseline is ", baseline)
@@ -90,8 +90,8 @@ def getbaseline(adc):
 def readadcvalue(adc):
     value = None
     try:
-        adc.configure(channel=1, resolution=14, gain=1, continuous=False)
-        #time.sleep(0.003)
+        adc.configure(channel=1, resolution=12, gain=1, continuous=False)
+        time.sleep(0.003)
         value = adc.read()
     except OSError as e:
         print("Buffering...")
@@ -109,7 +109,7 @@ def checkpillpickup(adc, baseline):
     if value is None or baseline is None:
         print ("ADC Read Error Delay")
         return 0
-    if (((value < baseline * 0.8) or (value > baseline * 1.2)) & (value > 40)):    
+    if (((value < baseline * 0.95) or (value > baseline * 1.05)) & (value > 40)):    
         print (" Pill picked up, raw value", value, "baseline ", baseline)
         return 1
     return 0
@@ -121,10 +121,10 @@ if __name__ == "__main__":
         #DO NOT INCLUDE THIS IN THE FINAL DESIGN
         #i2c = I2C(0, scl=Pin(1), sda=Pin(0))
         #print(i2c.scan())
-
+ 
         adc_gh = adcpinsetup(0, 1, 0)  
         Vacuum.vacuum_on()
-        time.sleep(0.1)
+        time.sleep(0.2)
         baseline = getbaseline(adc_gh)
         #Dispenser.rotate_to_container(0,6)
 
