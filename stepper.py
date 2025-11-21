@@ -20,7 +20,7 @@ step_degree = 1.8/4                       # number of degrees per step.
 susan_delay = 0.01                      #1/2 susan_delay between steps
 arm_delay = 0.005                        #1/2 of arm delay
 steps_to_opening = 40                   #10 x microstep value
-MAX_DEPTH = 576
+MAX_DEPTH = 580
 
 def step(n, dir = 0, delay = susan_delay):                   #function that performs n steps in dir direction (0 = forward, 1 = backwards.) Default is forwards.
     global susan_step
@@ -108,9 +108,9 @@ def raise_arm(delay = arm_delay):
         step_arm(delay)
         depth_reached = depth_reached + 1
     arm_dir.value(0)
-    for x in range(17):
-        step_arm()
-    sleep(0.25)
+    # for x in range(16):
+    #     step_arm()
+    # sleep(0.25)
     print(depth_reached)
 
 def shakearm():

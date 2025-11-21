@@ -33,7 +33,7 @@ class MCP3424:
             status = data[-1]
             if not (status & 0x80):  # conversion ready
                 break
-            time.sleep(0.05)
+            time.sleep(0.01)
         else:
             print("Conversion not ready after retries")
             return None
@@ -82,7 +82,7 @@ def adcpinsetup(I2c, sclvalue, sdavalue):
 def getbaseline(adc):
    
     adc.configure(channel=1, resolution=12, gain=1, continuous=False)
-    time.sleep(0.003)
+    time.sleep(0.005)
     baseline = adc.read()
     print("baseline is ", baseline)
     return baseline
@@ -91,7 +91,7 @@ def readadcvalue(adc):
     value = None
     try:
         adc.configure(channel=1, resolution=12, gain=1, continuous=False)
-        time.sleep(0.003)
+        time.sleep(0.005)
         value = adc.read()
     except OSError as e:
         print("Buffering...")
@@ -109,7 +109,7 @@ def checkpillpickup(adc, baseline):
     if value is None or baseline is None:
         print ("ADC Read Error Delay")
         return 0
-    if (((value < baseline * 0.95) or (value > baseline * 1.05)) & (value > 40)):    
+    if (((value < 6) or (value > 8)) & (value > 5)):    
         print (" Pill picked up, raw value", value, "baseline ", baseline)
         return 1
     return 0
