@@ -3,3 +3,4 @@
 *.txt
 adc_tester.py
 *.csv
+*.pyc
