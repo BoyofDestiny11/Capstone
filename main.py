@@ -1,5 +1,6 @@
 import asyncio
 import time
+import dispenser
 
 # For tests only
 from machine import Pin
@@ -48,17 +49,18 @@ async def async_loop():
     asyncio.create_task(server)
     
     # Loop for other tasks
-    import RTC
+    # import RTC
     global data
     while True:
-        # Simulate value updates in dispenser for testing
-        rtc = RTC.clocksetup(1, 3, 2)
-        min=rtc.get_minutes()
-        print(f'Time: {min}')
-        data["last_dose_taken"]=not data['last_dose_taken']
-        memory.save(data)
-        print(data)
-        await asyncio.sleep(10)
+        # # Simulate value updates in dispenser for testing
+        # rtc = RTC.clocksetup(1, 3, 2)
+        # min=rtc.get_minutes()
+        # print(f'Time: {min}')
+        # data["last_dose_taken"]=not data['last_dose_taken']
+        # memory.save(data)
+        # print(data)
+        # await asyncio.sleep(10)
+        dispenser.Dispenser(data)
 
 # Test Functions for main-level
 def loop_test():
