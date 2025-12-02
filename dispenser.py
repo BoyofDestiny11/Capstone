@@ -115,7 +115,7 @@ def Dispenser(data):
             - updates amounts
     '''
 # Get the schedule that corresponds to the current time or return if there is no match.
-    current_time=clock.get_time()
+    current_time=clock.get_minutes()
     doses=[0]
     for x in range(0, len(data['schedule']), _NUM_CONTAINERS+1):
         if (data['schedule'][x]==current_time):
@@ -127,12 +127,7 @@ def Dispenser(data):
     #begin dispensing using "doses"
     "Calibrate, then set current susan position to 0, then loop through dispensePill, using currentpos, i (container number) and then doses[i] for amount."
     #unsleep both steppers and bring both to 0 position:::
-    stepper.Sleeptoggle('susan', 1)
-    stepper.Sleeptoggle('arm', 1)
-    stepper.raise_arm()
-    arm_pos = 0
-    stepper.calibrate()                 
-    susan_pos = 0
+    
 
 
     #Both steppers are in the 0 position.
@@ -141,7 +136,12 @@ def Dispenser(data):
             print(f"insufficient pills in container {x}")
             data['last_dose_take'] = False
             return True
-
+    stepper.Sleeptoggle('susan', 1)
+    stepper.Sleeptoggle('arm', 1)
+    stepper.raise_arm()
+    arm_pos = 0
+    stepper.calibrate()                 
+    susan_pos = 0
     for i in range(_NUM_CONTAINERS):
         if doses[i] != 0:
             dispensePill(susan_pos, i, doses[i])
@@ -191,12 +191,12 @@ def stepperadcvacuumtest():
                 # print("I2C Error:", e)
                     sleep(0.01)  # give bus time to recover
 
-data={"schedule": [2, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0,
-                   5, 0, 0, 2, 0, 0, 0, 0, 2, 0, 0,
-                   8, 10, 0, 0, 0, 0, 0, 0, 0, 0, 9],
+data={"schedule": [988, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0,
+                   990, 0, 0, 2, 0, 0, 0, 0, 2, 0, 0,
+                   992, 10, 0, 0, 0, 0, 0, 0, 0, 0, 9],
     "amounts": [10, 10, 10, 10, 10, 10, 10, 10, 10, 10],
     "last_dose_taken": True,
-    "init_time": 0}
+    "init_time": 975}
 
 def lower_util_ADC_test():
 
@@ -210,16 +210,22 @@ def lower_util_ADC_test():
     reset()
 
 if __name__ == "__main__":
-    try:
-        stepper.Sleeptoggle('susan', 1)
-        sleep(0.1)
+    stepper.Sleeptoggle('susan', 1)
+    stepper.Sleeptoggle('arm', 1)
+    stepper.calibrate()
+    reset()
+    # while True:
+        # Dispenser(data)
+        # sleep(45)
+        # stepper.Sleeptoggle('susan', 1)
+        # sleep(0.1)
         #  stepper.rotate_to_container(0, 8)
         # stepper.calibrate()
         # stepper.rotate_to_container(0, 7)
         # stepper.Sleeptoggle('arm', 1)
-        stepper.calibrate()
-        dispensePill(0, 4, 3)
-        dispensePill(4, 0, 2)
+        # stepper.calibrate()
+        # dispensePill(0, 4, 3)
+        # dispensePill(4, 0, 2)
         # pickup_pill()
         #  drop_pill()
         # stepper.lowertomaxdepth()
@@ -303,10 +309,10 @@ if __name__ == "__main__":
         # sleep(1)
         # stepper.rotate_back_to_container()
     #     lower_util_ADC_test()
-    except KeyboardInterrupt:
-        reset()
-        print("Stopped")
-    finally:
-         sleep(2)
-         reset()
+    # except KeyboardInterrupt:
+    #     reset()
+    #     print("Stopped")
+    # finally:
+        #  sleep(2)
+        #  reset()
     
