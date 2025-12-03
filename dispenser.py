@@ -132,10 +132,10 @@ def Dispenser(data):
     
 
     start_time = time.ticks_ms()
-    while (time.ticks_ms() - start_time <= 15000):
+    while (time.ticks_ms() - start_time <= 15002):
         if(button.value() == 1):
             break
-        if(time.ticks_ms() - start_time == 15000):
+        if(time.ticks_ms() - start_time >= 15000):
             return False
 
     #Both steppers are in the 0 position.
