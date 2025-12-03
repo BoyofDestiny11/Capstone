@@ -52,15 +52,9 @@ async def async_loop():
     # import RTC
     global data
     while True:
-        # # Simulate value updates in dispenser for testing
-        # rtc = RTC.clocksetup(1, 3, 2)
-        # min=rtc.get_minutes()
-        # print(f'Time: {min}')
-        # data["last_dose_taken"]=not data['last_dose_taken']
-        # memory.save(data)
+        await asyncio.sleep(45)
+        data['last_dose_taken']=dispenser.Dispenser(data)
         # print(data)
-        await asyncio.sleep(10)
-        dispenser.Dispenser(data)
 
 # Test Functions for main-level
 def loop_test():

@@ -66,7 +66,7 @@ def schedule_add(body, schedule):
     index=0
     for pair in pairs[1:]:  #Append the doses.
         label, val = pair.split("=")
-        index=int(label)+insert_pos
+        index=int(label)+insert_pos+1
 
         match_val = number.search(val)              #Ensure value isn't empty
         if not match_val:

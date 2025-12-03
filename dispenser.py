@@ -122,7 +122,7 @@ def Dispenser(data):
             doses=data['schedule'][x+1:x+_NUM_CONTAINERS+1]         #Doses has the array that will be used 
             break
     if (doses==[0]):
-        return False    # It was not time to dispense.
+        return data['last_dose_taken']    # It was not time to dispense. Save the last_pill_taken state.
     
     #begin dispensing using "doses"
     "Calibrate, then set current susan position to 0, then loop through dispensePill, using currentpos, i (container number) and then doses[i] for amount."
@@ -134,8 +134,7 @@ def Dispenser(data):
     for x in range(len(data['amounts'])):
         if doses[x] > data['amounts'][x]:
             print(f"insufficient pills in container {x}")
-            data['last_dose_take'] = False
-            return True
+            return False                # Pill not taken: Insufficient Amounts Case
     stepper.Sleeptoggle('susan', 1)
     stepper.Sleeptoggle('arm', 1)
     stepper.raise_arm()
@@ -147,14 +146,13 @@ def Dispenser(data):
             dispensePill(susan_pos, i, doses[i])
             susan_pos = i
             sleep(0.75)     #delay 0.75s after all pills have been dispensed from a container
-    data['last_dose_taken'] = True
         
 
 
     update_values(data['amounts'], doses)
     stepper.Sleeptoggle('susan', 0)
     stepper.Sleeptoggle('arm', 0)
-    return True         # It was time to dispense.
+    return True         # Pills were dispensed. Update last_dose_taken to true.
 
 def reset():
     stepper.Sleeptoggle('susan', 0)
@@ -210,109 +208,9 @@ def lower_util_ADC_test():
     reset()
 
 if __name__ == "__main__":
-    stepper.Sleeptoggle('susan', 1)
-    stepper.Sleeptoggle('arm', 1)
-    stepper.calibrate()
+    # stepper.Sleeptoggle('susan', 1)
+    # stepper.Sleeptoggle('arm', 1)
+    # stepper.calibrate()
     reset()
-    # while True:
-        # Dispenser(data)
-        # sleep(45)
-        # stepper.Sleeptoggle('susan', 1)
-        # sleep(0.1)
-        #  stepper.rotate_to_container(0, 8)
-        # stepper.calibrate()
-        # stepper.rotate_to_container(0, 7)
-        # stepper.Sleeptoggle('arm', 1)
-        # stepper.calibrate()
-        # dispensePill(0, 4, 3)
-        # dispensePill(4, 0, 2)
-        # pickup_pill()
-        #  drop_pill()
-        # stepper.lowertomaxdepth()
-        # stepper.arm_dir.value(1)
-        # sleep(0.1)
-        # stepper.step(12, 1)
-        # stepper.raise_arm()
-        # for x in range(18):
-        #     stepper.step_arm()
-        # stepper.step(16, 1)
-        # sleep(0.5)
-        # stepper.step(32, 0)
-        # sleep(0.5)
-        # stepper.step(16, 1)
-        # sleep(0.5)
-        # pickup_pill()
-
-        # arm_pos = 0
-        # # Vacuum.vacuum_on()
-        # # sleep(0.75)
-        # # stepper.Sleeptoggle('arm', 1)
-        # # stepper.arm_step.value(0)
-        # # stepper.lowertomaxdepth()
-        # # sleep(0.1)
-        # # stepper.raise_arm()
-        # stepper.Sleeptoggle('susan', 1)
-        # # sleep(0.01)
-        # # stepper.calibrate()
-        # # sleep(0.25)
-        # # stepper.rotate_to_container(0,8)
-
-        # stepper.Sleeptoggle('arm', 1)
-        # sleep(0.1)
-        # stepper.calibrate()
-        # stepper.arm_dir.value(0)
-        # Vacuum.vacuum_on()
-        # sleep(0.75)
-        # stepper.raise_arm(0.001)
-        # baseline = adc.getbaseline(sensor)
-        # # while(arm_pos <= stepper.MAX_DEPTH):
-        # #     if(arm_pos <= 250):
-        # #         stepper.step_arm(0.001)
-        # #         arm_pos = arm_pos + 1
-        # #     else:
-        # while(not (adc.checkpillpickup(sensor, baseline)) and arm_pos <= stepper.MAX_DEPTH):
-        #     stepper.step_arm(0.001)
-        #     arm_pos = arm_pos + 1
-        #     print(f'step # {arm_pos}')
-        
-        # sleep(1)
-        # stepper.raise_arm(0.001)
-        # sleep(0.1)
-        # stepper.rotate_to_opening()
-        # Vacuum.vacuum_off()
-        # sleep(3)
-        # stepper.rotate_back_to_container()
-        # Vacuum.vacuum_on()
-        # sleep(0.75)
-        # stepper.arm_step.value(0)
-        # stepper.susan_step.value(0)
-        # stepper.arm_dir.value(0)
-        # stepper.susan_dir.value(0)
-        # stepper.Sleeptoggle('arm', 1)
-        # stepper.Sleeptoggle('susan', 1)
-        # sleep(0.05)
-        # stepper.calibrate()
-        # sleep(0.1)
-        # Vacuum.vacuum_on()
-        # sleep(0.75)
-        # stepper.Sleeptoggle('susan', 0)
-        # # stepper.rotate_to_container(0, 5)
-        # # stepper.step(100, 0)
-        
-        # stepper.lowertomaxdepth()
-        # sleep(0.2)
-        # stepper.raise_arm()
-        # sleep(0.1)
-        # stepper.rotate_to_opening()
-        # sleep(0.1)
-        # # Vacuum.vacuum_off()
-        # sleep(1)
-        # stepper.rotate_back_to_container()
-    #     lower_util_ADC_test()
-    # except KeyboardInterrupt:
-    #     reset()
-    #     print("Stopped")
-    # finally:
-        #  sleep(2)
-        #  reset()
+    
     
