@@ -16,9 +16,9 @@ def buzzervolume(duty_cycle = 2):
 def buzzerfreq(freq = 500):
     pwm.freq(freq)
 
-def wareagle(base = 0.25):
+def wareagle(base = 0.25, volume = 2):
     buzzerfreq(392)
-    buzzervolume(2)
+    buzzervolume(volume)
     time.sleep(base * 4)
     buzzerfreq(660)
     time.sleep(base * 2)
@@ -28,7 +28,7 @@ def wareagle(base = 0.25):
     time.sleep(0.2)
     buzzervolume(0)
     time.sleep(0.1)
-    buzzervolume(2)
+    buzzervolume(volume)
     time.sleep(base * 2)
     buzzerfreq(440)
     time.sleep(base)

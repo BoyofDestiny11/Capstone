@@ -5,6 +5,7 @@ import RTC
 import Vacuum
 import stepper
 import adc
+import buzzer
 
 
 "-----------------Initialization-----------------"
@@ -130,19 +131,21 @@ def Dispenser(data):
     "Calibrate, then set current susan position to 0, then loop through dispensePill, using currentpos, i (container number) and then doses[i] for amount."
     #unsleep both steppers and bring both to 0 position:::
     
-
-    start_time = time.ticks_ms()
-    while (time.ticks_ms() - start_time <= 15002):
-        if(button.value() == 1):
-            break
-        if(time.ticks_ms() - start_time >= 15000):
-            return False
-
-    #Both steppers are in the 0 position.
     for x in range(len(data['amounts'])):
         if doses[x] > data['amounts'][x]:
             print(f"insufficient pills in container {x}")
             return False                # Pill not taken: Insufficient Amounts Case
+
+    buzzer.wareagle(0.25, 10)
+    start_time = time.ticks_ms()
+    while (time.ticks_ms() - start_time < 15000):
+        if(button.value() == 1):
+            break
+    if(time.ticks_ms() - start_time >= 15000):
+        return False
+
+    #Both steppers are in the 0 position.
+    
     stepper.Sleeptoggle('susan', 1)
     stepper.Sleeptoggle('arm', 1)
     stepper.raise_arm()
@@ -197,7 +200,7 @@ def stepperadcvacuumtest():
                 # print("I2C Error:", e)
                     sleep(0.01)  # give bus time to recover
 
-data={"schedule": [988, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0,
+data={"schedule": [633, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0,
                    990, 0, 0, 2, 0, 0, 0, 0, 2, 0, 0,
                    992, 10, 0, 0, 0, 0, 0, 0, 0, 0, 9],
     "amounts": [10, 10, 10, 10, 10, 10, 10, 10, 10, 10],
@@ -216,9 +219,12 @@ def lower_util_ADC_test():
     reset()
 
 if __name__ == "__main__":
-    # stepper.Sleeptoggle('susan', 1)
-    # stepper.Sleeptoggle('arm', 1)
-    # stepper.calibrate()
-    reset()
+    Vacuum.vacuum_on()
+    start_time = time.ticks_ms()
+    while (time.ticks_ms() - start_time < 15000):
+        if(button.value() == 1):
+            reset()
+    if(time.ticks_ms() - start_time >= 15000):
+        reset()
     
     
