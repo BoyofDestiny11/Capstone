@@ -1,5 +1,6 @@
 from machine import Pin, PWM, I2C
 from time import sleep
+import time
 import RTC
 import Vacuum
 import stepper
@@ -14,6 +15,7 @@ global susan_pos                        #current container position of the susan
 global attempt                          #attempt # to avoid infinite loop of pickup pill
 sensor = adc.adcpinsetup(0,1,0)          #DO WE NEED THIS?
 clock = RTC.clocksetup(1,3,2)
+button = Pin(8, Pin.IN)
 #endregion
 
 "-----------------End Initialization-----------------"
@@ -129,6 +131,12 @@ def Dispenser(data):
     #unsleep both steppers and bring both to 0 position:::
     
 
+    start_time = time.ticks_ms()
+    while (time.ticks_ms() - start_time <= 15000):
+        if(button.value() == 1):
+            break
+        if(time.ticks_ms() - start_time == 15000):
+            return False
 
     #Both steppers are in the 0 position.
     for x in range(len(data['amounts'])):
