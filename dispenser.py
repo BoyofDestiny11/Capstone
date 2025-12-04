@@ -6,6 +6,7 @@ import Vacuum
 import stepper
 import adc
 import buzzer
+import memory
 
 
 "-----------------Initialization-----------------"
@@ -104,7 +105,7 @@ def dispensePill(current, destination, amount):
         stepper.rotate_to_container(current, destination)
         stepper.raise_arm()
         for i in range(amount):
-            pickup_pill(150)
+            pickup_pill(200)
             drop_pill()
 
         return True
@@ -134,6 +135,8 @@ def Dispenser(data):
     for x in range(len(data['amounts'])):
         if doses[x] > data['amounts'][x]:
             print(f"insufficient pills in container {x}")
+            data['last_dose_taken'] = False
+            memory.save(data)
             return False                # Pill not taken: Insufficient Amounts Case
 
     buzzer.wareagle(0.25, 10)
@@ -142,6 +145,8 @@ def Dispenser(data):
         if(button.value() == 1):
             break
     if(time.ticks_ms() - start_time >= 15000):
+        data['last_dose_taken'] = False
+        memory.save(data)
         return False
 
     #Both steppers are in the 0 position.
@@ -163,6 +168,8 @@ def Dispenser(data):
     update_values(data['amounts'], doses)
     stepper.Sleeptoggle('susan', 0)
     stepper.Sleeptoggle('arm', 0)
+    data['last_dose_taken'] = False
+    memory.save(data)
     return True         # Pills were dispensed. Update last_dose_taken to true.
 
 def reset():
@@ -217,14 +224,15 @@ def lower_util_ADC_test():
     sleep(1)
     stepper.Sleeptoggle('arm', 0)
     reset()
+def turnonmotors():
+     stepper.Sleeptoggle('susan', 1)
+     stepper.Sleeptoggle('arm', 1)
 
 if __name__ == "__main__":
+    reset()
     Vacuum.vacuum_on()
-    start_time = time.ticks_ms()
-    while (time.ticks_ms() - start_time < 15000):
-        if(button.value() == 1):
-            reset()
-    if(time.ticks_ms() - start_time >= 15000):
-        reset()
-    
+    # turnonmotors()
+    # stepper.raise_arm(.001)
+    # stepper.calibrate()
+    # dispensePill(0, 7, 1)
     
