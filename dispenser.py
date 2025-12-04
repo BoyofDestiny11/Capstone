@@ -50,10 +50,10 @@ def pickup_pill(pill_depth = 0): #COMPLETE THIS
             #     stepper.step_arm(0.001)
             #     arm_pos = arm_pos + 1
             # else:
-    while(not (adc.checkpillpickup(sensor, baseline)) and arm_pos <= stepper.MAX_DEPTH):
-        stepper.step_arm(0.01)
+    while(not (adc.checkpillpickup(sensor, baseline)) and (arm_pos + pill_depth) <= stepper.MAX_DEPTH):
+        stepper.step_arm(0.05)
         arm_pos = arm_pos + 1
-        print(f'step # {arm_pos}')
+        # print(f'step # {arm_pos}')
 #at this point, arm has lowered with vacuum on until ADC hit. Vacuum is on, Stepper is live but not moving.
     sleep(0.25) #delay to ensure pill is secure.
 
@@ -105,7 +105,7 @@ def dispensePill(current, destination, amount):
         stepper.rotate_to_container(current, destination)
         stepper.raise_arm()
         for i in range(amount):
-            pickup_pill(200)
+            pickup_pill(300)
             drop_pill()
 
         return True
@@ -230,9 +230,12 @@ def turnonmotors():
 
 if __name__ == "__main__":
     reset()
-    Vacuum.vacuum_on()
+    # Vacuum.vacuum_on()
     # turnonmotors()
+    # # # # # # stepper.rotate_to_opening()
+    # # # # # # stepper.rotate_back_to_container()
     # stepper.raise_arm(.001)
     # stepper.calibrate()
-    # dispensePill(0, 7, 1)
+    # # # # # stepper.rotate_to_container(0,8)
+    # dispensePill(0, 4, 1)
     

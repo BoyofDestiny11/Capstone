@@ -105,7 +105,7 @@ def readadcvalue(adc):
 # and a 1 for if a pill has been picked up. I also have the print commands but these can be commented out. 
 def checkpillpickup(adc, baseline):
     value = readadcvalue(adc)
-    print("ADC Raw Value:", value)
+    # print("ADC Raw Value:", value)
     if value is None or baseline is None:
         print ("ADC Read Error Delay")
         return 0

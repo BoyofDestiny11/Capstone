@@ -17,10 +17,10 @@ containers = [0, 36, 72, 108, 144, 180, 216, 252, 288, 324] #update the containe
 
 #PARAMETERS
 step_degree = 1.8/4                       # number of degrees per step.
-susan_delay = 0.01                      #1/2 susan_delay between steps
+susan_delay = 0.005                      #1/2 susan_delay between steps
 arm_delay = 0.005                        #1/2 of arm delay
 steps_to_opening = 40                   #10 x microstep value
-MAX_DEPTH = 580
+MAX_DEPTH = 618
 
 def step(n, dir = 0, delay = susan_delay):                   #function that performs n steps in dir direction (0 = forward, 1 = backwards.) Default is forwards.
     global susan_step
@@ -33,9 +33,18 @@ def step(n, dir = 0, delay = susan_delay):                   #function that perf
     susan_step.value(0)
     print(f'stepping {n} steps in {dir} direction')
     for i in range(n):              # 2 * n because each step needs 1 on pulse and 1 off pulse.
-        susan_step.value(1)
-        sleep(delay)
-        susan_step.value(0)
+        if((i < 20) or ((n-i) < 20)):
+            susan_step.value(1)
+            sleep(delay * 4)
+            susan_step.value(0)
+        elif((i >= 20 and i <= 40) or (((n-i) <= 40) and ((n-i) >= 20))):
+            susan_step.value(1)
+            sleep(delay * 2)
+            susan_step.value(0)
+        else:
+            susan_step.value(1)
+            sleep(delay)
+            susan_step.value(0)
 
         # if i % 2 == 0 :                 #every positive step signal, increment position by however far in degrees the motor has moved
         #     # if dir == 0: susan_pos += step_degree
@@ -51,10 +60,12 @@ def calibrate():
     # susan_slp.value(1)
     while susan_cal.value() == 1:            #step until calibrated
          susan_step.value(0)
-         sleep(susan_delay)
+         sleep(susan_delay * 2)
          susan_step.value(1)
     print("calibrated.\n")
-    sleep(.2)
+    susan_dir.value(1)
+    step(4, 1)
+    sleep(.75)
     # susan_slp(0)
 def fullRot():                          #executes 1 full rotation of the motor
     step(360/step_degree)
@@ -72,19 +83,20 @@ def calcstep(current, destination):
         degrees = abs(delta)
 
     steps = degrees / step_degree
-    return int(round(steps + 6)), direction
+    return int(round(steps)), direction
 
 
 def rotate_to_container(current, destination):
     steps, direction = calcstep(current, destination)
     # print(f'Stepping {steps} steps in {direction} direction to move from container at position {containers.index(current)} to container at position {containers.index(destination)}')
     step(steps, direction)
+    sleep(1)
 
 def rotate_to_opening():
-    step(steps_to_opening, 1, susan_delay)
+    step(steps_to_opening, 1, susan_delay * 2)
 
 def rotate_back_to_container():
-    step(steps_to_opening, 0, susan_delay)
+    step(steps_to_opening, 0, susan_delay * 2)
 
 def Sleeptoggle(motor, value):      #'susan', 0 sleeps susan etc..
     if motor == 'susan':

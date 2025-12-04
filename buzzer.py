@@ -37,5 +37,5 @@ def wareagle(base = 0.25, volume = 2):
     buzzeroff()
 
 if __name__ == "__main__":
-    wareagle()
+    wareagle(0.25, 30)
     
