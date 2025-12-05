@@ -15,6 +15,7 @@ _NUM_CONTAINERS = const(10)             #num containers
 global arm_pos                          #current arbitrary position of arm. From 0 (top, calibrated position) to 628 (bottom, MAX_DEPTH).
 global susan_pos                        #current container position of the susan.
 global attempt                          #attempt # to avoid infinite loop of pickup pill
+global noPill
 sensor = adc.adcpinsetup(0,1,0)          #DO WE NEED THIS?
 clock = RTC.clocksetup(1,3,2)
 button = Pin(8, Pin.IN)
@@ -28,6 +29,8 @@ def calcheck():
 #region Pickup/Drop
 def pickup_pill(pill_depth = 0): #COMPLETE THIS
     global arm_pos
+    global noPill
+    noPill = 0
     arm_pos = 0
 #turn on vacuum and wait for it to stabilize
     Vacuum.vacuum_on() 
@@ -35,7 +38,6 @@ def pickup_pill(pill_depth = 0): #COMPLETE THIS
 
 #getbaseline value for adc.
     baseline = adc.getbaseline(sensor)
-    print("Baseline Value:", baseline)
 # except Exception as e: print("Initialization error:", e) CHECCK WITH ANDRE
     sleep(0.1)
     # stepper.raise_arm(0.001)
@@ -61,7 +63,12 @@ def pickup_pill(pill_depth = 0): #COMPLETE THIS
     stepper.raise_arm(.001)
     arm_pos = 0                     #reset arm_pos to 0 once at top.
     sleep(0.1)
-    attempt = 0
+    print(adc.checkpillpickup(sensor, baseline))
+    if(not adc.checkpillpickup(sensor, baseline)):
+         buzzer.error(2)
+         noPill = 1
+
+    sleep(0.5)
 #check if pill is still there when at the top.
     # if(adc.checkpillpickup(sensor, baseline)):
     #     attempt = 0  
@@ -106,8 +113,9 @@ def dispensePill(current, destination, amount):
         stepper.raise_arm()
         for i in range(amount):
             pickup_pill(300)
-            drop_pill()
-
+            if(not noPill):
+                drop_pill()
+            else: Vacuum.vacuum_off()
         return True
 #endregion
 def Dispenser(data):
@@ -237,5 +245,5 @@ if __name__ == "__main__":
     # stepper.raise_arm(.001)
     # stepper.calibrate()
     # # # # # stepper.rotate_to_container(0,8)
-    # dispensePill(0, 4, 1)
+    # dispensePill(0, 7, 5)
     

@@ -35,6 +35,16 @@ def wareagle(base = 0.25, volume = 2):
     buzzerfreq(392)
     time.sleep(1)
     buzzeroff()
+def error(volume = 2):
+    buzzerfreq(750)
+    buzzervolume(volume)
+    time.sleep(0.1)
+    buzzeroff()
+    time.sleep(0.1)
+    buzzervolume(volume)
+    time.sleep(0.1)
+    buzzeroff()
+
 
 if __name__ == "__main__":
     wareagle(0.25, 30)

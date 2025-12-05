@@ -17,7 +17,7 @@ containers = [0, 36, 72, 108, 144, 180, 216, 252, 288, 324] #update the containe
 
 #PARAMETERS
 step_degree = 1.8/4                       # number of degrees per step.
-susan_delay = 0.005                      #1/2 susan_delay between steps
+susan_delay = 0.0075                      #1/2 susan_delay between steps
 arm_delay = 0.005                        #1/2 of arm delay
 steps_to_opening = 40                   #10 x microstep value
 MAX_DEPTH = 618
