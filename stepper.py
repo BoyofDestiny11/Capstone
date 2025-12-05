@@ -98,6 +98,12 @@ def rotate_to_opening():
 def rotate_back_to_container():
     step(steps_to_opening, 0, susan_delay * 2)
 
+def rotate_to_opening9():
+    step(steps_to_opening, 0, susan_delay * 2)
+
+def rotate_back_to_container9():
+    step(steps_to_opening, 1, susan_delay * 2)
+
 def Sleeptoggle(motor, value):      #'susan', 0 sleeps susan etc..
     if motor == 'susan':
         susan_slp.value(value)

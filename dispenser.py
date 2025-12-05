@@ -92,13 +92,19 @@ def pickup_pill(pill_depth = 0): #COMPLETE THIS
     #          attempt = 0
     #     return False
 
-def drop_pill():                #Drop Pill will rotate to an opening, drop the pill, and rotate back.
-    stepper.rotate_to_opening()
+def drop_pill(container = 0):                #Drop Pill will rotate to an opening, drop the pill, and rotate back.
+    if(container == 1):
+        stepper.rotate_to_opening9()
+    else: 
+        stepper.rotate_to_opening()
     # susan_pos = susan_pos + 0.5
     Vacuum.vacuum_off()
     sleep(5)
     print("Pill dropped. Moving back to origin container.")
-    stepper.rotate_back_to_container()
+    if(container == 1):
+        stepper.rotate_back_to_container9()
+    else:
+        stepper.rotate_back_to_container
     # susan_pos = susan_pos - 0.5
     return 0
 #endregion
@@ -118,9 +124,12 @@ def dispensePill(current, destination, amount):
         stepper.rotate_to_container(current, destination)
         stepper.raise_arm()
         for i in range(amount):
-            pickup_pill(300)
+            pickup_pill(250)
             if(not noPill):
-                drop_pill()
+                if(destination == 9):
+                    drop_pill(1)
+                else:
+                    drop_pill(0)
             else: Vacuum.vacuum_off()
         return True
 #endregion
