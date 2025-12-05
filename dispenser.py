@@ -31,6 +31,7 @@ def pickup_pill(pill_depth = 0): #COMPLETE THIS
     global arm_pos
     global noPill
     noPill = 0
+    adccheck = 0
     arm_pos = 0
 #turn on vacuum and wait for it to stabilize
     Vacuum.vacuum_on() 
@@ -58,15 +59,20 @@ def pickup_pill(pill_depth = 0): #COMPLETE THIS
         # print(f'step # {arm_pos}')
 #at this point, arm has lowered with vacuum on until ADC hit. Vacuum is on, Stepper is live but not moving.
     sleep(0.25) #delay to ensure pill is secure.
-
+    if(adc.checkpillpickup(sensor, baseline)):
+        for x in range(6):
+            stepper.step_arm(0.025)
 #raise arm back to top position. USE THIS TO RECORD DEPTH REACHED FOR MEMORY IF NEEDED!
     stepper.raise_arm(.001)
     arm_pos = 0                     #reset arm_pos to 0 once at top.
     sleep(0.1)
-    print(adc.checkpillpickup(sensor, baseline))
-    if(not adc.checkpillpickup(sensor, baseline)):
-         buzzer.error(2)
-         noPill = 1
+    # print(adc.checkpillpickup(sensor, baseline))
+    for x in range(10):
+        if(adc.checkpillpickup(sensor, baseline)):
+            adccheck = 1
+    if(adccheck == 0):
+        buzzer.error(2)
+        noPill = 1
 
     sleep(0.5)
 #check if pill is still there when at the top.
@@ -239,11 +245,17 @@ def turnonmotors():
 if __name__ == "__main__":
     reset()
     # Vacuum.vacuum_on()
-    # turnonmotors()
-    # # # # # # stepper.rotate_to_opening()
-    # # # # # # stepper.rotate_back_to_container()
-    # stepper.raise_arm(.001)
-    # stepper.calibrate()
-    # # # # # stepper.rotate_to_container(0,8)
-    # dispensePill(0, 7, 5)
-    
+    turnonmotors()
+    # sleep(0.25)
+    # # # pickup_pill(200)
+    # # # stepper.Sleeptoggle('susan', 1)
+    # # # # # # # # # stepper.rotate_to_opening()
+    # # # # # # # # # stepper.rotate_back_to_container()
+    stepper.raise_arm(.001)
+    stepper.calibrate()
+    # # pickup_pill(200)
+    # # stepper.rotate_to_container(0,8)
+    dispensePill(0, 4, 4)
+    sleep(2)
+    reset()
+
